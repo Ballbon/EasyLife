@@ -90,7 +90,7 @@ export function AuthForm({ action, mode }: AuthFormProps) {
         </div>
       ) : null}
 
-      <Button className="w-full" size="lg" disabled={pending}>
+      <Button type="submit" className="w-full" size="lg" disabled={pending}>
         {pending ? "กำลังดำเนินการ..." : modeLabels[mode]}
       </Button>
     </form>

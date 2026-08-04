@@ -73,7 +73,7 @@ export function OnboardingForm({ defaultName = "" }: { defaultName?: string }) {
         </p>
         <FieldError error={state.errors?.initialBalance?.[0]} />
       </div>
-      <Button className="w-full" size="lg" disabled={pending}>
+      <Button type="submit" className="w-full" size="lg" disabled={pending}>
         {pending ? "กำลังตั้งค่า..." : "เริ่มใช้ EasyLife"}
       </Button>
     </form>
