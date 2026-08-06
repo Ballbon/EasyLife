@@ -5,6 +5,7 @@ import CategoryBreakdown from "@/components/CategoryBreakdown.vue";
 import DailyCashflowChart from "@/components/DailyCashflowChart.vue";
 import PageState from "@/components/PageState.vue";
 import { loadFinanceData, type FinanceData } from "@/lib/finance";
+import { useAppNavigation } from "@/lib/navigation";
 import { calculateAccountBalance, formatSatang } from "@/lib/money";
 import {
   buildMonthlyReport,
@@ -22,9 +23,12 @@ import type { Transaction } from "@/types/finance";
 const loading = ref(true);
 const error = ref("");
 const data = ref<FinanceData>();
+const { goBack } = useAppNavigation();
 const month = currentBangkokMonth();
 
-onMounted(async () => {
+async function loadData() {
+  loading.value = true;
+  error.value = "";
   try {
     data.value = await loadFinanceData();
   } catch {
@@ -32,6 +36,10 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+}
+
+onMounted(() => {
+  loadData();
 });
 
 const report = computed(() =>
@@ -85,16 +93,27 @@ function typeIcon(type: string) {
 </script>
 
 <template>
-  <PageState :loading="loading" :error="error">
+  <PageState :loading="loading" :error="error" skeleton-type="dashboard" @retry="loadData">
     <div v-if="data" class="dashboard-page">
       <header
         class="d-flex flex-wrap align-end justify-space-between ga-4 mb-6"
       >
         <div>
           <p class="text-body-2 text-medium-emphasis">{{ dateLabel }}</p>
-          <h1 class="page-title mt-1">
-            สวัสดี {{ data.profile.display_name ?? "ผู้ใช้ EasyLife" }}
-          </h1>
+          <div class="d-flex align-center ga-2 mt-1">
+            <VBtn
+              icon="mdi-arrow-left"
+              variant="tonal"
+              color="secondary"
+              size="small"
+              aria-label="ย้อนกลับ"
+              title="ย้อนกลับ"
+              @click="goBack('/')"
+            />
+            <h1 class="page-title mb-0">
+              สวัสดี {{ data.profile.display_name ?? "ผู้ใช้ EasyLife" }}
+            </h1>
+          </div>
           <p class="mt-1 text-body-2 text-medium-emphasis">
             ภาพรวมที่ควรรู้ก่อนเริ่มใช้เงินวันนี้
           </p>

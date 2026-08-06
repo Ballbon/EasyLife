@@ -27,6 +27,9 @@ function height(value: number) {
         class="cashflow-chart"
         role="img"
         aria-label="กราฟรายรับและรายจ่ายรายวัน"
+        :style="{
+          gridTemplateColumns: `repeat(${data.length || 31}, minmax(14px, 1fr))`,
+        }"
       >
         <div v-for="item in data" :key="item.day" class="chart-day">
           <div class="bars">

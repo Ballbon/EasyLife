@@ -3,12 +3,14 @@ import { computed, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { z } from "zod";
 
+import { useAppNavigation } from "@/lib/navigation";
 import { supabase } from "@/lib/supabase";
 import type { FieldErrors } from "@/types/finance";
 
 type Mode = "login" | "register" | "forgot" | "reset";
 const route = useRoute();
 const router = useRouter();
+const { goBack } = useAppNavigation();
 const mode = computed(() => route.meta.mode as Mode);
 const pending = ref(false);
 const message = ref("");
@@ -182,6 +184,18 @@ async function submit() {
           <VAvatar color="primary" rounded="lg"
             ><VIcon icon="mdi-sprout" /></VAvatar
           ><span class="text-h6 font-weight-bold">EasyLife</span>
+        </div>
+        <div v-if="mode !== 'login'" class="mb-4">
+          <VBtn
+            prepend-icon="mdi-arrow-left"
+            variant="text"
+            size="small"
+            color="secondary"
+            class="px-0"
+            @click="goBack('/login')"
+          >
+            ย้อนกลับไปหน้าเข้าสู่ระบบ
+          </VBtn>
         </div>
         <h2 class="text-h4 font-weight-semibold">{{ copy.title }}</h2>
         <p class="mt-2 mb-7 text-medium-emphasis">{{ copy.description }}</p>

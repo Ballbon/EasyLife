@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import PageState from "@/components/PageState.vue";
+import { useAppNavigation } from "@/lib/navigation";
 import {
   deleteTransaction,
   loadFinanceData,
@@ -18,6 +19,7 @@ import type { FieldErrors, TransactionDraft } from "@/types/finance";
 
 const route = useRoute();
 const router = useRouter();
+const { goBack } = useAppNavigation();
 const id = computed(() =>
   typeof route.params.id === "string" ? route.params.id : undefined,
 );
@@ -112,6 +114,17 @@ async function remove() {
   <PageState :loading="loading" :error="error && !data ? error : ''">
     <VCard v-if="data" class="materio-card mx-auto" max-width="760">
       <VCardItem class="px-5 px-sm-7 py-5">
+        <template #prepend>
+          <VBtn
+            icon="mdi-arrow-left"
+            variant="text"
+            size="small"
+            class="mr-2"
+            aria-label="ย้อนกลับ"
+            title="ย้อนกลับ"
+            @click="goBack('/transactions')"
+          />
+        </template>
         <VCardTitle class="font-weight-semibold">{{
           id ? "แก้ไขรายการ" : "เพิ่มรายการ"
         }}</VCardTitle>
@@ -205,11 +218,11 @@ async function remove() {
           />
           <div class="d-flex ga-3 mt-3">
             <VBtn
-              to="/transactions"
               variant="outlined"
               color="secondary"
               size="large"
               class="flex-grow-1"
+              @click="goBack('/transactions')"
               >ยกเลิก</VBtn
             ><VBtn
               type="submit"

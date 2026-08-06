@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 
 import PageState from "@/components/PageState.vue";
+import { useAppNavigation } from "@/lib/navigation";
 import {
   currentUserId,
   loadFinanceData,
@@ -17,6 +18,7 @@ import { supabase } from "@/lib/supabase";
 import { accountTypeLabels } from "@/lib/transactions";
 
 const route = useRoute();
+const { goBack } = useAppNavigation();
 const tab = computed(() => route.meta.settingsTab as "accounts" | "categories");
 const loading = ref(true);
 const pending = ref(false);
@@ -75,14 +77,12 @@ async function addAccount() {
   if (amount === null) return void (error.value = "ยอดตั้งต้นไม่ถูกต้อง");
   pending.value = true;
   const userId = await currentUserId();
-  const { error: insertError } = await supabase
-    .from("accounts")
-    .insert({
-      user_id: userId,
-      name: accountForm.name.trim(),
-      account_type: accountForm.accountType,
-      initial_balance_satang: amount,
-    });
+  const { error: insertError } = await supabase.from("accounts").insert({
+    user_id: userId,
+    name: accountForm.name.trim(),
+    account_type: accountForm.accountType,
+    initial_balance_satang: amount,
+  });
   pending.value = false;
   if (insertError) error.value = "เพิ่มบัญชีไม่สำเร็จ";
   else {
@@ -114,15 +114,13 @@ async function addCategory() {
     return void (error.value = "กรุณากรอกชื่อหมวดหมู่");
   pending.value = true;
   const userId = await currentUserId();
-  const { error: insertError } = await supabase
-    .from("categories")
-    .insert({
-      user_id: userId,
-      name: categoryForm.name.trim(),
-      transaction_type: categoryForm.transactionType,
-      color: categoryForm.color,
-      icon: categoryForm.icon,
-    });
+  const { error: insertError } = await supabase.from("categories").insert({
+    user_id: userId,
+    name: categoryForm.name.trim(),
+    transaction_type: categoryForm.transactionType,
+    color: categoryForm.color,
+    icon: categoryForm.icon,
+  });
   pending.value = false;
   if (insertError)
     error.value =
@@ -174,7 +172,18 @@ function categoryIcon(icon: string) {
     <div v-if="data">
       <div class="mb-6">
         <p class="text-body-2 text-medium-emphasis">ปรับแต่งพื้นที่การเงิน</p>
-        <h1 class="page-title">ตั้งค่าการเงิน</h1>
+        <div class="d-flex align-center ga-2 mt-1">
+          <VBtn
+            icon="mdi-arrow-left"
+            variant="tonal"
+            color="secondary"
+            size="small"
+            aria-label="ย้อนกลับ"
+            title="ย้อนกลับ"
+            @click="goBack('/dashboard')"
+          />
+          <h1 class="page-title mb-0">ตั้งค่าการเงิน</h1>
+        </div>
       </div>
       <VTabs :model-value="tab" color="primary" class="mb-6">
         <VTab

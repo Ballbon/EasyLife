@@ -4,7 +4,9 @@ import { computed, onMounted, ref } from "vue";
 import CategoryBreakdown from "@/components/CategoryBreakdown.vue";
 import DailyCashflowChart from "@/components/DailyCashflowChart.vue";
 import PageState from "@/components/PageState.vue";
+import { downloadCsv, generateTransactionsCsv } from "@/lib/exportCsv";
 import { loadFinanceData, type FinanceData } from "@/lib/finance";
+import { useAppNavigation } from "@/lib/navigation";
 import { formatSatang } from "@/lib/money";
 import {
   buildMonthlyReport,
@@ -18,6 +20,7 @@ import {
 const loading = ref(true);
 const error = ref("");
 const data = ref<FinanceData>();
+const { goBack } = useAppNavigation();
 const currentMonth = currentBangkokMonth();
 const selectedMonth = ref(currentMonth);
 const selectedMonthInput = computed({
@@ -29,7 +32,9 @@ const selectedMonthInput = computed({
   },
 });
 
-onMounted(async () => {
+async function loadData() {
+  loading.value = true;
+  error.value = "";
   try {
     data.value = await loadFinanceData();
   } catch {
@@ -37,7 +42,29 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+}
+
+onMounted(() => {
+  loadData();
 });
+
+function handleExportCsv() {
+  if (!data.value) return;
+  const filtered = data.value.transactions.filter((t) => {
+    const bangkokMonth = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Bangkok",
+      year: "numeric",
+      month: "2-digit",
+    }).format(new Date(t.occurred_at));
+    return bangkokMonth === selectedMonth.value;
+  });
+  const csvContent = generateTransactionsCsv(
+    filtered,
+    data.value.accounts,
+    data.value.categories,
+  );
+  downloadCsv(csvContent, `easylife-report-${selectedMonth.value}.csv`);
+}
 
 const report = computed(() =>
   buildMonthlyReport(
@@ -61,53 +88,95 @@ const expenseChange = computed(() =>
 );
 
 function moveMonth(direction: -1 | 1) {
-  selectedMonth.value =
+  const target =
     direction === -1
       ? previousMonth(selectedMonth.value)
       : nextMonth(selectedMonth.value);
+  if (target <= currentMonth) {
+    selectedMonth.value = target;
+  }
 }
 
-function changeLabel(value: number | null) {
-  if (value === null) return "—";
-  return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
+function formatDifference(diffSatang: number): string {
+  if (diffSatang > 0) return `เพิ่มขึ้น ${formatSatang(diffSatang)}`;
+  if (diffSatang < 0) return `ลดลง ${formatSatang(Math.abs(diffSatang))}`;
+  return "เท่ากับเดือนก่อน";
 }
+
+const incomeChip = computed(() => {
+  const change = incomeChange.value;
+  if (change === null) return { color: "secondary", text: "—" };
+  if (change > 0) return { color: "success", text: `+${change.toFixed(1)}%` };
+  if (change < 0) return { color: "error", text: `${change.toFixed(1)}%` };
+  return { color: "secondary", text: "0.0%" };
+});
+
+const expenseChip = computed(() => {
+  const change = expenseChange.value;
+  if (change === null) return { color: "secondary", text: "—" };
+  if (change < 0) return { color: "success", text: `${change.toFixed(1)}%` };
+  if (change > 0) return { color: "error", text: `+${change.toFixed(1)}%` };
+  return { color: "secondary", text: "0.0%" };
+});
 </script>
 
 <template>
-  <PageState :loading="loading" :error="error">
+  <PageState :loading="loading" :error="error" skeleton-type="dashboard" @retry="loadData">
     <div v-if="data" class="reports-page">
       <header class="report-header mb-6">
         <div>
           <p class="text-overline text-primary">Monthly ledger</p>
-          <h1 class="page-title">รายงานการเงิน</h1>
+          <div class="d-flex align-center ga-2 mt-1">
+            <VBtn
+              icon="mdi-arrow-left"
+              variant="tonal"
+              color="secondary"
+              size="small"
+              aria-label="ย้อนกลับ"
+              title="ย้อนกลับ"
+              @click="goBack('/dashboard')"
+            />
+            <h1 class="page-title mb-0">รายงานการเงิน</h1>
+          </div>
           <p class="mt-1 text-body-2 text-medium-emphasis">
             เปรียบเทียบพฤติกรรมการรับและใช้เงินเดือนต่อเดือน
           </p>
         </div>
-        <div class="month-control" aria-label="เลือกเดือนที่ต้องการดูรายงาน">
+        <div class="d-flex flex-wrap align-center ga-2">
           <VBtn
-            icon="mdi-chevron-left"
-            variant="text"
+            variant="outlined"
+            color="secondary"
+            prepend-icon="mdi-download-outline"
             size="small"
-            aria-label="เดือนก่อนหน้า"
-            @click="moveMonth(-1)"
-          />
-          <label>
-            <span class="sr-only">เดือนรายงาน</span>
-            <input
-              v-model="selectedMonthInput"
-              type="month"
-              :max="currentMonth"
+            @click="handleExportCsv"
+          >
+            ส่งออก CSV
+          </VBtn>
+          <div class="month-control" aria-label="เลือกเดือนที่ต้องการดูรายงาน">
+            <VBtn
+              icon="mdi-chevron-left"
+              variant="text"
+              size="small"
+              aria-label="เดือนก่อนหน้า"
+              @click="moveMonth(-1)"
             />
-          </label>
-          <VBtn
-            icon="mdi-chevron-right"
-            variant="text"
-            size="small"
-            aria-label="เดือนถัดไป"
-            :disabled="selectedMonth >= currentMonth"
-            @click="moveMonth(1)"
-          />
+            <label>
+              <span class="sr-only">เดือนรายงาน</span>
+              <input
+                v-model="selectedMonthInput"
+                type="month"
+                :max="currentMonth"
+              />
+            </label>
+            <VBtn
+              icon="mdi-chevron-right"
+              variant="text"
+              size="small"
+              aria-label="เดือนถัดไป"
+              :disabled="selectedMonth >= currentMonth"
+              @click="moveMonth(1)"
+            />
+          </div>
         </div>
       </header>
 
@@ -149,11 +218,11 @@ function changeLabel(value: number | null) {
                   {{ formatSatang(report.income) }}
                 </p>
                 <p class="text-caption text-medium-emphasis mt-2">
-                  ต่าง {{ formatSatang(report.income - previousReport.income) }}
+                  {{ formatDifference(report.income - previousReport.income) }}
                 </p>
               </div>
-              <VChip color="success" variant="tonal" size="small">{{
-                changeLabel(incomeChange)
+              <VChip :color="incomeChip.color" variant="tonal" size="small">{{
+                incomeChip.text
               }}</VChip>
             </div>
           </VCard>
@@ -169,12 +238,13 @@ function changeLabel(value: number | null) {
                   {{ formatSatang(report.expense) }}
                 </p>
                 <p class="text-caption text-medium-emphasis mt-2">
-                  ต่าง
-                  {{ formatSatang(report.expense - previousReport.expense) }}
+                  {{
+                    formatDifference(report.expense - previousReport.expense)
+                  }}
                 </p>
               </div>
-              <VChip color="error" variant="tonal" size="small">{{
-                changeLabel(expenseChange)
+              <VChip :color="expenseChip.color" variant="tonal" size="small">{{
+                expenseChip.text
               }}</VChip>
             </div>
           </VCard>

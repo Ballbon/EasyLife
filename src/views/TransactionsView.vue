@@ -2,7 +2,10 @@
 import { computed, onMounted, reactive, ref } from "vue";
 
 import PageState from "@/components/PageState.vue";
+import EmptyState from "@/components/ui/EmptyState.vue";
+import { downloadCsv, generateTransactionsCsv } from "@/lib/exportCsv";
 import { loadFinanceData, type FinanceData } from "@/lib/finance";
+import { useAppNavigation } from "@/lib/navigation";
 import { formatSatang } from "@/lib/money";
 import {
   formatBangkokDateTime,
@@ -14,6 +17,7 @@ import type { Transaction } from "@/types/finance";
 const loading = ref(true);
 const error = ref("");
 const data = ref<FinanceData>();
+const { goBack } = useAppNavigation();
 const filters = reactive({
   q: "",
   type: "",
@@ -29,7 +33,9 @@ const typeItems = [
   { title: "โอนเงิน", value: "transfer" },
 ];
 
-onMounted(async () => {
+async function loadData() {
+  loading.value = true;
+  error.value = "";
   try {
     data.value = await loadFinanceData();
   } catch {
@@ -37,7 +43,24 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+}
+
+onMounted(() => {
+  loadData();
 });
+
+function handleExportCsv() {
+  if (!data.value) return;
+  const csvContent = generateTransactionsCsv(
+    transactions.value,
+    data.value.accounts,
+    data.value.categories,
+  );
+  const todayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+  }).format(new Date());
+  downloadCsv(csvContent, `easylife-transactions-${todayStr}.csv`);
+}
 
 const accountNames = computed(
   () => new Map(data.value?.accounts.map((item) => [item.id, item.name])),
@@ -96,16 +119,37 @@ function resetFilters() {
 </script>
 
 <template>
-  <PageState :loading="loading" :error="error">
+  <PageState :loading="loading" :error="error" skeleton-type="list" @retry="loadData">
     <div v-if="data">
       <div class="d-flex flex-wrap align-end justify-space-between ga-4 mb-6">
         <div>
           <p class="text-body-2 text-medium-emphasis">การเงินของคุณ</p>
-          <h1 class="page-title">รายการทั้งหมด</h1>
+          <div class="d-flex align-center ga-2 mt-1">
+            <VBtn
+              icon="mdi-arrow-left"
+              variant="tonal"
+              color="secondary"
+              size="small"
+              aria-label="ย้อนกลับ"
+              title="ย้อนกลับ"
+              @click="goBack('/dashboard')"
+            />
+            <h1 class="page-title mb-0">รายการทั้งหมด</h1>
+          </div>
         </div>
-        <VBtn to="/transactions/new" color="primary" prepend-icon="mdi-plus"
-          >เพิ่มรายการ</VBtn
-        >
+        <div class="d-flex ga-2">
+          <VBtn
+            variant="outlined"
+            color="secondary"
+            prepend-icon="mdi-download-outline"
+            @click="handleExportCsv"
+          >
+            ส่งออก CSV
+          </VBtn>
+          <VBtn to="/transactions/new" color="primary" prepend-icon="mdi-plus">
+            เพิ่มรายการ
+          </VBtn>
+        </div>
       </div>
 
       <VCard class="materio-card pa-4 pa-md-5 mb-6">
@@ -225,10 +269,15 @@ function resetFilters() {
             <VDivider v-if="index < transactions.length - 1" inset />
           </template>
         </VList>
-        <div v-else class="pa-12 text-center text-medium-emphasis">
-          <VIcon icon="mdi-text-box-search-outline" size="48" class="mb-3" />
-          <p>ยังไม่พบรายการ ลองเปลี่ยนตัวกรองหรือเพิ่มรายการแรก</p>
-        </div>
+
+        <EmptyState
+          v-else
+          title="ไม่พบรายการการเงิน"
+          description="ไม่พบรายการที่ตรงกับเงื่อนไขการกรองของคุณ ลองเปลี่ยนตัวกรองหรือเพิ่มรายการแรก"
+          action-text="เพิ่มรายการใหม่"
+          action-icon="mdi-plus"
+          to="/transactions/new"
+        />
       </VCard>
     </div>
   </PageState>

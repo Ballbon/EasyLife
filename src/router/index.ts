@@ -56,6 +56,16 @@ export const router = createRouter({
           meta: { title: "รายงานการเงิน" },
         },
         {
+          path: "plans",
+          component: () => import("@/views/PlansView.vue"),
+          meta: { title: "แผนการเงิน" },
+        },
+        {
+          path: "quests",
+          component: () => import("@/views/QuestsView.vue"),
+          meta: { title: "Daily Quest" },
+        },
+        {
           path: "transactions/new",
           component: () => import("@/views/TransactionFormView.vue"),
           meta: { title: "เพิ่มรายการ" },
@@ -74,6 +84,11 @@ export const router = createRouter({
           path: "settings/categories",
           component: () => import("@/views/SettingsView.vue"),
           meta: { title: "จัดการหมวดหมู่", settingsTab: "categories" },
+        },
+        {
+          path: "offline",
+          component: () => import("@/views/OfflineView.vue"),
+          meta: { title: "ออฟไลน์", public: true },
         },
       ],
     },

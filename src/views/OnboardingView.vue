@@ -4,11 +4,13 @@ import { useRouter } from "vue-router";
 import { z } from "zod";
 
 import { currentUserId } from "@/lib/finance";
+import { useAppNavigation } from "@/lib/navigation";
 import { parseMoneyToSatang } from "@/lib/money";
 import { supabase } from "@/lib/supabase";
 import type { FieldErrors } from "@/types/finance";
 
 const router = useRouter();
+const { goBack } = useAppNavigation();
 const pending = ref(false);
 const loading = ref(true);
 const message = ref("");
@@ -112,6 +114,18 @@ async function submit() {
         </VCol>
         <VCol cols="12" md="6" lg="5">
           <VCard class="materio-card pa-6 pa-sm-9">
+            <div class="mb-3">
+              <VBtn
+                prepend-icon="mdi-arrow-left"
+                variant="text"
+                size="small"
+                color="secondary"
+                class="px-0"
+                @click="goBack('/login')"
+              >
+                ย้อนกลับ
+              </VBtn>
+            </div>
             <h2 class="text-h4 font-weight-semibold">ตั้งค่าเริ่มต้น</h2>
             <p class="mt-2 mb-7 text-medium-emphasis">
               ข้อมูลนี้แก้ไขภายหลังได้ในการตั้งค่า
