@@ -25,6 +25,25 @@ export async function currentUserId(): Promise<string> {
   return data.user.id;
 }
 
+async function loadAllTransactions(userId: string): Promise<Transaction[]> {
+  const pageSize = 1_000;
+  const transactions: Transaction[] = [];
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", userId)
+      .order("occurred_at", { ascending: false })
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    transactions.push(...(data ?? []));
+    if (!data || data.length < pageSize) break;
+  }
+
+  return transactions;
+}
+
 export async function loadFinanceData(): Promise<FinanceData> {
   const userId = await currentUserId();
   const [profileResult, accountsResult, categoriesResult, transactionsResult] =
@@ -40,25 +59,17 @@ export async function loadFinanceData(): Promise<FinanceData> {
         .select("*")
         .eq("user_id", userId)
         .order("name"),
-      supabase
-        .from("transactions")
-        .select("*")
-        .eq("user_id", userId)
-        .order("occurred_at", { ascending: false })
-        .limit(200),
+      loadAllTransactions(userId),
     ]);
   const error =
-    profileResult.error ??
-    accountsResult.error ??
-    categoriesResult.error ??
-    transactionsResult.error;
+    profileResult.error ?? accountsResult.error ?? categoriesResult.error;
   if (error) throw error;
   if (!profileResult.data) throw new Error("ไม่พบโปรไฟล์ผู้ใช้");
   return {
     profile: profileResult.data,
     accounts: accountsResult.data ?? [],
     categories: categoriesResult.data ?? [],
-    transactions: transactionsResult.data ?? [],
+    transactions: transactionsResult,
   };
 }
 

@@ -51,6 +51,11 @@ export const router = createRouter({
           meta: { title: "รายการทั้งหมด" },
         },
         {
+          path: "reports",
+          component: () => import("@/views/ReportsView.vue"),
+          meta: { title: "รายงานการเงิน" },
+        },
+        {
           path: "transactions/new",
           component: () => import("@/views/TransactionFormView.vue"),
           meta: { title: "เพิ่มรายการ" },

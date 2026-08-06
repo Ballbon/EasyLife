@@ -12,6 +12,7 @@ const drawer = ref(false);
 
 const navItems = [
   { title: "ภาพรวม", icon: "mdi-view-dashboard-outline", to: "/dashboard" },
+  { title: "รายงาน", icon: "mdi-chart-box-outline", to: "/reports" },
   { title: "รายการ", icon: "mdi-swap-horizontal", to: "/transactions" },
   { title: "บัญชี", icon: "mdi-wallet-outline", to: "/settings/accounts" },
   { title: "หมวดหมู่", icon: "mdi-shape-outline", to: "/settings/categories" },
@@ -60,8 +61,9 @@ async function logout() {
           prepend-icon="mdi-logout"
           color="secondary"
           @click="logout"
-          >ออกจากระบบ</VBtn
         >
+          ออกจากระบบ
+        </VBtn>
         <p class="mt-2 text-center text-caption text-medium-emphasis">
           Theme inspired by
           <a
@@ -83,9 +85,9 @@ async function logout() {
     }}</VAppBarTitle>
     <template #append>
       <VBtn icon="mdi-bell-outline" variant="text" aria-label="การแจ้งเตือน" />
-      <VAvatar color="primary" size="36" class="ml-2"
-        ><VIcon icon="mdi-account-outline" size="20"
-      /></VAvatar>
+      <VAvatar color="primary" size="36" class="ml-2">
+        <VIcon icon="mdi-account-outline" size="20" />
+      </VAvatar>
     </template>
   </VAppBar>
 
