@@ -72,6 +72,8 @@ EasyLife คือเว็บแอปแบบ Mobile-first สำหรับ
 - ตรวจสอบว่าสัดส่วนรวมไม่เกิน 100%
 - เปรียบเทียบยอดตามแผนกับยอดที่ใช้จริง
 - คัดลอกแผนจากเดือนก่อน
+- สร้างเป้าหมาย เช่น เงินฉุกเฉินหรือเงินท่องเที่ยว
+- แสดงความคืบหน้าของแต่ละเป้าหมาย
 
 ### 3.6 Daily Quest
 
@@ -93,31 +95,32 @@ EasyLife คือเว็บแอปแบบ Mobile-first สำหรับ
 - Native application สำหรับ iOS และ Android
 - หลายสกุลเงิน
 - ระบบลงทุนเต็มรูปแบบ
-- เป้าหมายออมเงินและการติดตามเงินสะสม (Financial Goal)
 - Gamification ระดับสูง เช่น badge, level และ achievement
 - Offline synchronization เต็มรูปแบบ
 
 ## 5. Tech Stack
 
-| ส่วน             | เทคโนโลยี                       |
-| ---------------- | ------------------------------- |
-| Application      | Next.js App Router + TypeScript |
-| Styling          | Tailwind CSS                    |
-| UI components    | shadcn/ui                       |
-| Icons            | Lucide Icons                    |
-| Database         | Supabase PostgreSQL             |
-| Authentication   | Supabase Auth                   |
-| Authorization    | PostgreSQL Row Level Security   |
-| Validation       | Zod                             |
-| Forms            | React Hook Form                 |
-| Charts           | Recharts                        |
-| Date utilities   | date-fns                        |
-| Unit tests       | Vitest                          |
-| End-to-end tests | Playwright                      |
-| CI/CD            | GitHub Actions                  |
-| Hosting          | Vercel                          |
-| Database hosting | Supabase Cloud                  |
-| Error monitoring | Sentry หลังจบ MVP               |
+| ส่วน | เทคโนโลยี |
+- Main Framework: Vue3 (Typescript)
+- UI Libs: Vuetify
+- Build Tools: Vite
+- Theme : Materio
+- Test Tools: Vitest
+|---|---|
+| Icons | Lucide Icons |
+| Database | Supabase PostgreSQL |
+| Authentication | Supabase Auth |
+| Authorization | PostgreSQL Row Level Security |
+| Validation | Zod |
+| Forms | React Hook Form |
+| Charts | Recharts |
+| Date utilities | date-fns |
+| Unit tests | Vitest |
+| End-to-end tests | Playwright |
+| CI/CD | GitHub Actions |
+| Hosting | Vercel |
+| Database hosting | Supabase Cloud |
+| Error monitoring | Sentry หลังจบ MVP |
 
 ## 6. สถาปัตยกรรมระบบ
 
@@ -276,6 +279,7 @@ Navigation บนมือถือ:
 - Categories
 - Monthly Budget
 - Financial Plan
+- Financial Goal
 - Daily Quest List
 - Quest Calendar
 - Quest History
@@ -287,40 +291,40 @@ Navigation บนมือถือ:
 
 ### Phase 0 — Product Specification (2–3 วัน)
 
-- [x] กำหนดกลุ่มผู้ใช้เริ่มต้น — ดู `PRODUCT_SPEC.md` ข้อ 2
-- [x] เขียนปัญหาหลักที่ผลิตภัณฑ์ต้องแก้ — ดู `PRODUCT_SPEC.md` ข้อ 3
-- [x] ยืนยันขอบเขต MVP — ดู `PRODUCT_SPEC.md` ข้อ 4
-- [x] เขียน user stories — ดู `PRODUCT_SPEC.md` ข้อ 5
-- [x] วาด user flow — ดู `PRODUCT_SPEC.md` ข้อ 6
-- [x] ทำ wireframe หน้าหลัก — ดู `PRODUCT_SPEC.md` ข้อ 8
-- [x] กำหนดกฎการคำนวณเงินและสิ้นเดือน — ดู `PRODUCT_SPEC.md` ข้อ 9–10
-- [x] กำหนด acceptance criteria — ดู `PRODUCT_SPEC.md` ข้อ 11
+- [ ] กำหนดกลุ่มผู้ใช้เริ่มต้น
+- [ ] เขียนปัญหาหลักที่ผลิตภัณฑ์ต้องแก้
+- [ ] ยืนยันขอบเขต MVP
+- [ ] เขียน user stories
+- [ ] วาด user flow
+- [ ] ทำ wireframe หน้าหลัก
+- [ ] กำหนดกฎการคำนวณเงินและสิ้นเดือน
+- [ ] กำหนด acceptance criteria
 
 ### Phase 1 — Project Foundation (สัปดาห์ที่ 1)
 
-- [x] สร้าง Next.js TypeScript project
-- [x] ติดตั้ง Tailwind CSS และ shadcn/ui
-- [x] ตั้งค่า ESLint และ formatter
-- [x] สร้าง Git repository (`main`)
-- [x] ตั้งค่า environment variables และ `.env.example`
-- [x] ตั้งค่า Supabase local development
-- [x] สร้าง database migrations และ generated TypeScript types
-- [x] สร้าง seed data สำหรับหมวดหมู่เริ่มต้น
-- [x] ทำระบบสมัครสมาชิก เข้าสู่ระบบ ออกจากระบบ และลืมรหัสผ่าน
-- [x] ทำ onboarding และ protected routes ด้วย Next.js Proxy
-- [x] สร้าง RLS policies ชุดแรกและ pgTAP tests
+- [ ] สร้าง Vue.js TypeScript project
+- [ ] ติดตั้ง Vuetify และ Materio
+- [ ] ตั้งค่า ESLint และ formatter
+- [ ] สร้าง Git repository
+- [ ] ตั้งค่า environment variables
+- [ ] ตั้งค่า Supabase local development
+- [ ] สร้าง database migrations
+- [ ] สร้าง seed data สำหรับหมวดหมู่เริ่มต้น
+- [ ] ทำระบบสมัครสมาชิกและเข้าสู่ระบบ
+- [ ] ทำ protected routes
+- [ ] สร้าง RLS policies ชุดแรก
 
 ### Phase 2 — Transactions (สัปดาห์ที่ 2)
 
-- [x] สร้างระบบบัญชีการเงิน
-- [x] สร้างระบบหมวดหมู่
-- [x] เพิ่มรายรับและรายจ่าย
-- [x] ทำ Quick Add
-- [x] ทำการโอนเงินระหว่างบัญชี
-- [x] แก้ไขและลบรายการ
-- [x] ทำประวัติรายการ
-- [x] ทำตัวกรองและค้นหา
-- [x] เขียน unit tests สำหรับการคำนวณเงิน
+- [ ] สร้างระบบบัญชีการเงิน
+- [ ] สร้างระบบหมวดหมู่
+- [ ] เพิ่มรายรับและรายจ่าย
+- [ ] ทำ Quick Add
+- [ ] ทำการโอนเงินระหว่างบัญชี
+- [ ] แก้ไขและลบรายการ
+- [ ] ทำประวัติรายการ
+- [ ] ทำตัวกรองและค้นหา
+- [ ] เขียน unit tests สำหรับการคำนวณเงิน
 
 ### Phase 3 — Dashboard and Reports (สัปดาห์ที่ 3)
 
@@ -341,6 +345,8 @@ Navigation บนมือถือ:
 - [ ] รองรับเปอร์เซ็นต์และจำนวนคงที่
 - [ ] ตรวจยอดจัดสรรรวม
 - [ ] คัดลอกแผนจากเดือนก่อน
+- [ ] สร้างเป้าหมายทางการเงิน
+- [ ] แสดง progress ของเป้าหมาย
 
 ### Phase 5 — Daily Quest (สัปดาห์ที่ 5)
 
@@ -495,15 +501,15 @@ Apply Production Migration
 
 ## 14. ความเสี่ยงและแนวทางป้องกัน
 
-| ความเสี่ยง                             | แนวทางป้องกัน                                       |
-| -------------------------------------- | --------------------------------------------------- |
-| ยอดเงินคำนวณคลาดเคลื่อน                | เก็บเงินเป็นจำนวนเต็มหน่วยสตางค์และเขียน unit tests |
-| ข้อมูลข้ามผู้ใช้                       | เปิด RLS และทดสอบ policy ทุกตาราง                   |
-| รายงานผิดช่วงเดือน                     | กำหนด timezone เป็น Asia/Bangkok และทดสอบ boundary  |
-| Scope ใหญ่เกินไป                       | ยึดรายการ MVP และเลื่อนฟีเจอร์เสริมออกไป            |
-| ผู้ใช้ไม่บันทึกรายการต่อเนื่อง         | ทำ Quick Add ให้ใช้ได้ภายในไม่กี่ขั้นตอน            |
-| Database schema เปลี่ยนโดยไม่มีประวัติ | บังคับใช้ migrations และเก็บใน Git                  |
-| Production มีปัญหาแต่ไม่ทราบ           | เพิ่ม error monitoring และ smoke tests              |
+| ความเสี่ยง | แนวทางป้องกัน |
+|---|---|
+| ยอดเงินคำนวณคลาดเคลื่อน | เก็บเงินเป็นจำนวนเต็มหน่วยสตางค์และเขียน unit tests |
+| ข้อมูลข้ามผู้ใช้ | เปิด RLS และทดสอบ policy ทุกตาราง |
+| รายงานผิดช่วงเดือน | กำหนด timezone เป็น Asia/Bangkok และทดสอบ boundary |
+| Scope ใหญ่เกินไป | ยึดรายการ MVP และเลื่อนฟีเจอร์เสริมออกไป |
+| ผู้ใช้ไม่บันทึกรายการต่อเนื่อง | ทำ Quick Add ให้ใช้ได้ภายในไม่กี่ขั้นตอน |
+| Database schema เปลี่ยนโดยไม่มีประวัติ | บังคับใช้ migrations และเก็บใน Git |
+| Production มีปัญหาแต่ไม่ทราบ | เพิ่ม error monitoring และ smoke tests |
 
 ## 15. งานแรกที่ควรเริ่ม
 
@@ -513,3 +519,4 @@ Apply Production Migration
 4. ออกแบบ database schema ฉบับละเอียด
 5. สร้าง Next.js และ Supabase local project
 6. พัฒนา Authentication และ Transactions ก่อน
+

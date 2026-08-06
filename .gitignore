@@ -13,12 +13,10 @@
 # testing
 /coverage
 
-# next.js
+# Vite production output
+/dist/
+# Legacy build cache from the previous Next.js stack
 /.next/
-/out/
-
-# production
-/build
 
 # misc
 .DS_Store
@@ -38,9 +36,5 @@ yarn-error.log*
 /supabase/.branches
 /supabase/.temp
 
-# vercel
-.vercel
-
 # typescript
 *.tsbuildinfo
-next-env.d.ts
