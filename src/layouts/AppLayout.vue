@@ -13,7 +13,7 @@ const route = useRoute();
 const router = useRouter();
 const { mdAndUp } = useDisplay();
 const drawer = ref<boolean | null>(null);
-const isPinned = ref(localStorage.getItem("sidebar_pinned") !== "false");
+const isPinned = ref(window.localStorage.getItem("sidebar_pinned") !== "false");
 const isHovering = ref(false);
 const showQuickAdd = ref(false);
 const { goBack } = useAppNavigation();
@@ -25,7 +25,7 @@ const isExpanded = computed(
 
 function togglePin() {
   isPinned.value = !isPinned.value;
-  localStorage.setItem("sidebar_pinned", String(isPinned.value));
+  window.localStorage.setItem("sidebar_pinned", String(isPinned.value));
 }
 
 const navItems = [

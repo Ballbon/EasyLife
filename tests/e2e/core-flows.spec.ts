@@ -30,7 +30,10 @@ test("registers, completes onboarding, and records an expense", async ({
 
   await page.goto("/transactions/new");
   await page.getByLabel("จำนวนเงิน (บาท)").fill("125.50");
-  await page.getByLabel("หมวดหมู่").click();
+  await page
+    .locator('[role="combobox"]')
+    .filter({ has: page.getByLabel("หมวดหมู่") })
+    .click();
   await page.getByRole("option").first().click();
   await page.getByLabel("โน้ต").fill("Phase 7 E2E expense");
   await page.getByRole("button", { name: "บันทึกรายการ" }).click();

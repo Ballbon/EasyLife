@@ -42,6 +42,14 @@ for (const file of trackedFiles) {
 }
 
 const example = readFileSync(".env.example", "utf8");
+const viteConfig = readFileSync("vite.config.ts", "utf8");
+
+if (/supabase-api-cache|runtimeCaching[\s\S]*supabase\.co/.test(viteConfig)) {
+  errors.push(
+    "vite.config.ts: authenticated Supabase API responses must not be cached",
+  );
+}
+
 const exampleKeys = [...example.matchAll(/^([A-Z][A-Z0-9_]*)=/gm)].map(
   (match) => match[1],
 );
