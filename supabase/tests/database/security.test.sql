@@ -1,6 +1,8 @@
 begin;
 
+set local role postgres;
 create extension if not exists pgtap with schema extensions;
+set local search_path = extensions, public;
 select plan(26);
 
 select ok(
