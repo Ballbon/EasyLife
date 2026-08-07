@@ -3,7 +3,7 @@ begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = extensions, public;
-select plan(26);
+select plan(30);
 
 select ok(
   (select bool_and(relrowsecurity)
@@ -53,6 +53,28 @@ select ok(
 select ok(
   not has_function_privilege('anon', 'public.set_quest_completion(uuid,date,boolean)', 'EXECUTE'),
   'anon cannot execute set_quest_completion'
+);
+select ok(
+  not has_function_privilege('anon', 'public.handle_new_user()', 'EXECUTE'),
+  'anon cannot execute the auth trigger helper'
+);
+select ok(
+  not has_function_privilege('authenticated', 'public.handle_new_user()', 'EXECUTE'),
+  'authenticated cannot execute the auth trigger helper'
+);
+select ok(
+  coalesce(
+    not has_function_privilege('anon', to_regprocedure('public.rls_auto_enable()'), 'EXECUTE'),
+    true
+  ),
+  'anon cannot execute the RLS event-trigger helper'
+);
+select ok(
+  coalesce(
+    not has_function_privilege('authenticated', to_regprocedure('public.rls_auto_enable()'), 'EXECUTE'),
+    true
+  ),
+  'authenticated cannot execute the RLS event-trigger helper'
 );
 select ok(
   has_function_privilege('authenticated', 'public.complete_onboarding(text,text,text,bigint)', 'EXECUTE'),
