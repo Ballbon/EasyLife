@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 
 import PageState from "@/components/PageState.vue";
+import { categoryIcon, categoryIconItems } from "@/lib/categoryIcons";
 import {
   currentUserId,
   loadFinanceData,
@@ -23,6 +24,7 @@ const pending = ref(false);
 const error = ref("");
 const success = ref("");
 const data = ref<FinanceData>();
+const editingCategoryId = ref("");
 const accountForm = reactive({
   name: "",
   accountType: "cash",
@@ -37,14 +39,6 @@ const categoryForm = reactive({
 const accountTypes = Object.entries(accountTypeLabels).map(
   ([value, title]) => ({ value, title }),
 );
-const iconItems = [
-  { title: "ทั่วไป", value: "circle" },
-  { title: "อาหาร", value: "utensils" },
-  { title: "เดินทาง", value: "car" },
-  { title: "บ้าน", value: "home" },
-  { title: "งาน", value: "briefcase" },
-  { title: "สุขภาพ", value: "heart" },
-];
 const usage = computed(() => {
   const counts = new Map<string, number>();
   data.value?.transactions.forEach((item) => {
@@ -53,6 +47,28 @@ const usage = computed(() => {
   });
   return counts;
 });
+
+function resetCategoryForm() {
+  editingCategoryId.value = "";
+  Object.assign(categoryForm, {
+    name: "",
+    transactionType: "expense",
+    icon: "circle",
+    color: "#9155FD",
+  });
+}
+
+function editCategory(category: FinanceData["categories"][number]) {
+  error.value = "";
+  success.value = "";
+  editingCategoryId.value = category.id;
+  Object.assign(categoryForm, {
+    name: category.name,
+    transactionType: category.transaction_type,
+    icon: category.icon,
+    color: category.color,
+  });
+}
 
 async function refresh() {
   try {
@@ -137,6 +153,50 @@ async function addCategory() {
   }
 }
 
+async function updateCategory() {
+  error.value = "";
+  success.value = "";
+  if (!categoryForm.name.trim())
+    return void (error.value = "กรุณากรอกชื่อหมวดหมู่");
+
+  const category = data.value?.categories.find(
+    (item) => item.id === editingCategoryId.value,
+  );
+  if (!category) return;
+
+  pending.value = true;
+  const userId = await currentUserId();
+  const { error: updateError } = await supabase
+    .from("categories")
+    .update({
+      name: categoryForm.name.trim(),
+      transaction_type: usage.value.get(category.id)
+        ? category.transaction_type
+        : categoryForm.transactionType,
+      color: categoryForm.color,
+      icon: categoryForm.icon,
+    })
+    .eq("id", category.id)
+    .eq("user_id", userId);
+  pending.value = false;
+
+  if (updateError) {
+    error.value =
+      updateError.code === "23505"
+        ? "มีชื่อหมวดหมู่นี้แล้ว"
+        : "แก้ไขหมวดหมู่ไม่สำเร็จ";
+    return;
+  }
+
+  resetCategoryForm();
+  success.value = "บันทึกการแก้ไขหมวดหมู่แล้ว";
+  await refresh();
+}
+
+function submitCategory() {
+  return editingCategoryId.value ? updateCategory() : addCategory();
+}
+
 async function removeCategory(id: string) {
   if (!window.confirm("ยืนยันการลบหมวดหมู่นี้?")) return;
   const userId = await currentUserId();
@@ -148,20 +208,6 @@ async function removeCategory(id: string) {
     .eq("is_default", false);
   if (deleteError) error.value = "ลบหมวดหมู่ไม่สำเร็จ";
   else await refresh();
-}
-
-function categoryIcon(icon: string) {
-  return (
-    (
-      {
-        utensils: "mdi-silverware-fork-knife",
-        car: "mdi-car-outline",
-        home: "mdi-home-outline",
-        briefcase: "mdi-briefcase-outline",
-        heart: "mdi-heart-outline",
-      } as Record<string, string>
-    )[icon] ?? "mdi-circle-outline"
-  );
 }
 </script>
 
@@ -289,7 +335,11 @@ function categoryIcon(icon: string) {
               :key="category.id"
               cols="12"
               sm="6"
-              ><VCard class="materio-card pa-5 h-100"
+              ><VCard
+                class="materio-card pa-5 h-100 category-card"
+                :class="{
+                  'category-card--editing': editingCategoryId === category.id,
+                }"
                 ><div class="d-flex align-center ga-3">
                   <VAvatar
                     :style="{
@@ -309,20 +359,42 @@ function categoryIcon(icon: string) {
                       · {{ usage.get(category.id) ?? 0 }} รายการ
                     </p>
                   </div>
-                  <VBtn
-                    v-if="!category.is_default && !usage.get(category.id)"
-                    icon="mdi-delete-outline"
-                    variant="text"
-                    color="error"
-                    size="small"
-                    :aria-label="`ลบ ${category.name}`"
-                    @click="removeCategory(category.id)"
-                  /></div></VCard></VCol></VRow
+                  <div class="d-flex ga-1">
+                    <VBtn
+                      icon="mdi-pencil-outline"
+                      variant="text"
+                      color="primary"
+                      size="small"
+                      :aria-label="`แก้ไข ${category.name}`"
+                      @click="editCategory(category)"
+                    />
+                    <VBtn
+                      v-if="!category.is_default && !usage.get(category.id)"
+                      icon="mdi-delete-outline"
+                      variant="text"
+                      color="error"
+                      size="small"
+                      :aria-label="`ลบ ${category.name}`"
+                      @click="removeCategory(category.id)"
+                    />
+                  </div></div></VCard></VCol></VRow
         ></VCol>
         <VCol cols="12" lg="4"
           ><VCard class="materio-card pa-6"
-            ><h2 class="text-h6 font-weight-semibold mb-5">เพิ่มหมวดหมู่</h2>
-            <VForm @submit.prevent="addCategory"
+            ><div class="d-flex align-center justify-space-between mb-5">
+              <h2 class="text-h6 font-weight-semibold">
+                {{ editingCategoryId ? "แก้ไขหมวดหมู่" : "เพิ่มหมวดหมู่" }}
+              </h2>
+              <VBtn
+                v-if="editingCategoryId"
+                variant="text"
+                color="secondary"
+                size="small"
+                @click="resetCategoryForm"
+                >ยกเลิก</VBtn
+              >
+            </div>
+            <VForm @submit.prevent="submitCategory"
               ><VTextField
                 v-model="categoryForm.name"
                 label="ชื่อหมวดหมู่"
@@ -334,20 +406,29 @@ function categoryIcon(icon: string) {
                   { title: 'รายจ่าย', value: 'expense' },
                   { title: 'รายรับ', value: 'income' },
                 ]"
+                :disabled="
+                  !!editingCategoryId && !!usage.get(editingCategoryId)
+                "
+                :hint="
+                  editingCategoryId && usage.get(editingCategoryId)
+                    ? 'เปลี่ยนประเภทไม่ได้ เนื่องจากมีรายการในหมวดหมู่นี้แล้ว'
+                    : undefined
+                "
+                persistent-hint
                 class="mb-2"
               /><VSelect
                 v-model="categoryForm.icon"
                 label="ไอคอน"
-                :items="iconItems"
+                :items="categoryIconItems"
                 class="mb-2"
               /><VTextField
                 v-model="categoryForm.color"
                 label="สี"
                 type="color"
                 class="mb-3"
-              /><VBtn type="submit" color="primary" :loading="pending" block
-                >เพิ่มหมวดหมู่</VBtn
-              ></VForm
+              /><VBtn type="submit" color="primary" :loading="pending" block>{{
+                editingCategoryId ? "บันทึกการแก้ไข" : "เพิ่มหมวดหมู่"
+              }}</VBtn></VForm
             ></VCard
           ></VCol
         >
@@ -359,5 +440,16 @@ function categoryIcon(icon: string) {
 <style scoped>
 .d-grid {
   display: grid;
+}
+
+.category-card {
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.category-card--editing {
+  border-color: rgb(var(--v-theme-primary));
+  box-shadow: 0 0 0 1px rgb(var(--v-theme-primary));
 }
 </style>
