@@ -3,7 +3,6 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 
 import PageState from "@/components/PageState.vue";
-import { useAppNavigation } from "@/lib/navigation";
 import {
   currentUserId,
   loadFinanceData,
@@ -18,7 +17,6 @@ import { supabase } from "@/lib/supabase";
 import { accountTypeLabels } from "@/lib/transactions";
 
 const route = useRoute();
-const { goBack } = useAppNavigation();
 const tab = computed(() => route.meta.settingsTab as "accounts" | "categories");
 const loading = ref(true);
 const pending = ref(false);
@@ -172,18 +170,7 @@ function categoryIcon(icon: string) {
     <div v-if="data">
       <div class="mb-6">
         <p class="text-body-2 text-medium-emphasis">ปรับแต่งพื้นที่การเงิน</p>
-        <div class="d-flex align-center ga-2 mt-1">
-          <VBtn
-            icon="mdi-arrow-left"
-            variant="tonal"
-            color="secondary"
-            size="small"
-            aria-label="ย้อนกลับ"
-            title="ย้อนกลับ"
-            @click="goBack('/dashboard')"
-          />
-          <h1 class="page-title mb-0">ตั้งค่าการเงิน</h1>
-        </div>
+        <h1 class="page-title mt-1 mb-0">ตั้งค่าการเงิน</h1>
       </div>
       <VTabs :model-value="tab" color="primary" class="mb-6">
         <VTab

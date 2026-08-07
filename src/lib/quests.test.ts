@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  addCalendarDays,
   calculateQuestStreak,
+  currentBangkokDate,
+  datesForMonth,
   isTaskScheduled,
   occurrencesOnDate,
   totalQuestPoints,
@@ -32,6 +35,19 @@ function completion(date: string, points = 10) {
 }
 
 describe("quest occurrences", () => {
+  it("handles leap day and year boundaries with calendar arithmetic", () => {
+    expect(addCalendarDays("2028-02-28", 1)).toBe("2028-02-29");
+    expect(addCalendarDays("2026-12-31", 1)).toBe("2027-01-01");
+    expect(datesForMonth("2028-02")).toHaveLength(29);
+    expect(datesForMonth("2027-02")).toHaveLength(28);
+  });
+
+  it("uses the Bangkok date when UTC is still on the previous day", () => {
+    expect(currentBangkokDate(new Date("2026-08-05T17:00:00.000Z"))).toBe(
+      "2026-08-06",
+    );
+  });
+
   it("shows a one-time quest only on its start date", () => {
     expect(isTaskScheduled(task, schedule("once"), "2026-08-03")).toBe(true);
     expect(isTaskScheduled(task, schedule("once"), "2026-08-04")).toBe(false);

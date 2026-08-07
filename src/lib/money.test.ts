@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   calculateAccountBalance,
+  formatSatang,
   parseMoneyToSatang,
   signedTransactionAmount,
 } from "@/lib/money";
@@ -23,6 +24,16 @@ describe("parseMoneyToSatang", () => {
       expect(parseMoneyToSatang(input)).toBeNull();
     },
   );
+
+  it("keeps satang exact at the maximum supported input", () => {
+    expect(parseMoneyToSatang("999,999,999.99")).toBe(99_999_999_999);
+  });
+});
+
+describe("formatSatang", () => {
+  it("formats integer satang as Thai baht without losing decimals", () => {
+    expect(formatSatang(125_050)).toContain("1,250.50");
+  });
 });
 
 describe("calculateAccountBalance", () => {
@@ -67,5 +78,11 @@ describe("calculateAccountBalance", () => {
         },
       ]),
     ).toBe(-100);
+  });
+
+  it("does not change unrelated accounts or double count a transfer", () => {
+    expect(calculateAccountBalance(500, "other", transactions)).toBe(500);
+    expect(signedTransactionAmount("income", 100)).toBe(100);
+    expect(signedTransactionAmount("expense", 100)).toBe(-100);
   });
 });

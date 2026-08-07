@@ -11,9 +11,16 @@ export default defineConfig({
     },
   },
   test: {
+    include: ["src/**/*.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
+      thresholds: {
+        statements: 75,
+        branches: 60,
+        functions: 80,
+        lines: 80,
+      },
     },
   },
 });

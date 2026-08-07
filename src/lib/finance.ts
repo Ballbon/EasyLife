@@ -5,8 +5,11 @@ import { supabase } from "@/lib/supabase";
 import { bangkokLocalInputToIso, transactionTypes } from "@/lib/transactions";
 import type {
   Account,
+  Budget,
   Category,
   FieldErrors,
+  FinancialPlan,
+  PlanAllocation,
   Profile,
   Transaction,
   TransactionDraft,
@@ -17,6 +20,9 @@ export type FinanceData = {
   accounts: Account[];
   categories: Category[];
   transactions: Transaction[];
+  plans: FinancialPlan[];
+  allocations: PlanAllocation[];
+  budgets: Budget[];
 };
 
 export async function currentUserId(): Promise<string> {
@@ -46,23 +52,50 @@ async function loadAllTransactions(userId: string): Promise<Transaction[]> {
 
 export async function loadFinanceData(): Promise<FinanceData> {
   const userId = await currentUserId();
-  const [profileResult, accountsResult, categoriesResult, transactionsResult] =
-    await Promise.all([
-      supabase.from("profiles").select("*").eq("id", userId).single(),
-      supabase
-        .from("accounts")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at"),
-      supabase
-        .from("categories")
-        .select("*")
-        .eq("user_id", userId)
-        .order("name"),
-      loadAllTransactions(userId),
-    ]);
+  const [
+    profileResult,
+    accountsResult,
+    categoriesResult,
+    transactionsResult,
+    plansResult,
+    allocationsResult,
+    budgetsResult,
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", userId).single(),
+    supabase
+      .from("accounts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at"),
+    supabase
+      .from("categories")
+      .select("*")
+      .eq("user_id", userId)
+      .order("name"),
+    loadAllTransactions(userId),
+    supabase
+      .from("financial_plans")
+      .select("*")
+      .eq("user_id", userId)
+      .order("month", { ascending: false }),
+    supabase
+      .from("plan_allocations")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at"),
+    supabase
+      .from("budgets")
+      .select("*")
+      .eq("user_id", userId)
+      .order("month", { ascending: false }),
+  ]);
   const error =
-    profileResult.error ?? accountsResult.error ?? categoriesResult.error;
+    profileResult.error ??
+    accountsResult.error ??
+    categoriesResult.error ??
+    plansResult.error ??
+    allocationsResult.error ??
+    budgetsResult.error;
   if (error) throw error;
   if (!profileResult.data) throw new Error("ไม่พบโปรไฟล์ผู้ใช้");
   return {
@@ -70,6 +103,9 @@ export async function loadFinanceData(): Promise<FinanceData> {
     accounts: accountsResult.data ?? [],
     categories: categoriesResult.data ?? [],
     transactions: transactionsResult,
+    plans: plansResult.data ?? [],
+    allocations: allocationsResult.data ?? [],
+    budgets: budgetsResult.data ?? [],
   };
 }
 

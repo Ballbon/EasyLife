@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   bangkokMonthRange,
   buildMonthlyReport,
+  currentBangkokMonth,
   nextMonth,
   percentageChange,
   previousMonth,
@@ -32,6 +33,12 @@ function transaction(
 }
 
 describe("Bangkok report months", () => {
+  it("uses the Bangkok month at the UTC year boundary", () => {
+    expect(currentBangkokMonth(new Date("2025-12-31T17:00:00.000Z"))).toBe(
+      "2026-01",
+    );
+  });
+
   it("creates half-open UTC boundaries from Bangkok midnight", () => {
     const range = bangkokMonthRange("2026-08");
     expect(new Date(range.start).toISOString()).toBe(
@@ -66,6 +73,12 @@ describe("Bangkok report months", () => {
     );
     expect(report.daily).toHaveLength(29);
     expect(report.daily[28].income).toBe(500);
+  });
+
+  it("uses 28 days for February in a non-leap year", () => {
+    expect(buildMonthlyReport("2027-02", [], categories).daily).toHaveLength(
+      28,
+    );
   });
 });
 

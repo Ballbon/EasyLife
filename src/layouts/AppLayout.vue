@@ -13,9 +13,20 @@ const route = useRoute();
 const router = useRouter();
 const { mdAndUp } = useDisplay();
 const drawer = ref<boolean | null>(null);
+const isPinned = ref(localStorage.getItem("sidebar_pinned") !== "false");
+const isHovering = ref(false);
 const showQuickAdd = ref(false);
 const { goBack } = useAppNavigation();
 const { isOnline } = useNetworkStatus();
+
+const isExpanded = computed(
+  () => isPinned.value || isHovering.value || !mdAndUp.value,
+);
+
+function togglePin() {
+  isPinned.value = !isPinned.value;
+  localStorage.setItem("sidebar_pinned", String(isPinned.value));
+}
 
 const navItems = [
   { title: "ภาพรวม", icon: "mdi-view-dashboard-outline", to: "/dashboard" },
@@ -34,6 +45,20 @@ const navItems = [
 const showFab = computed(
   () => route.path === "/dashboard" || route.path === "/transactions",
 );
+
+const showBackButton = computed(() => {
+  const mainRoutes = [
+    "/dashboard",
+    "/",
+    "/plans",
+    "/quests",
+    "/reports",
+    "/transactions",
+    "/settings/accounts",
+    "/settings/categories",
+  ];
+  return !mainRoutes.includes(route.path);
+});
 
 function handleKeyDown(e: { altKey: boolean; key: string; preventDefault: () => void }) {
   if (e.altKey && e.key.toLowerCase() === "n") {
@@ -72,18 +97,43 @@ async function logout() {
   <VNavigationDrawer
     v-model="drawer"
     :permanent="mdAndUp"
-    :rail="false"
+    :rail="!isPinned && mdAndUp"
+    :expand-on-hover="!isPinned && mdAndUp"
+    rail-width="68"
     width="260"
+    @mouseenter="isHovering = true"
+    @mouseleave="isHovering = false"
   >
-    <div class="d-flex align-center ga-3 px-6 py-5">
-      <VAvatar color="primary" rounded="lg" size="38">
-        <VIcon icon="mdi-sprout" color="white" />
-      </VAvatar>
-      <span class="text-h6 font-weight-bold">EasyLife</span>
+    <div
+      class="d-flex align-center"
+      :class="isExpanded ? 'justify-space-between px-5 py-4' : 'justify-center py-4'"
+      style="min-height: 64px;"
+    >
+      <div class="d-flex align-center ga-3 overflow-hidden">
+        <VAvatar color="primary" rounded="lg" size="38" class="flex-shrink-0">
+          <VIcon icon="mdi-sprout" color="white" />
+        </VAvatar>
+        <span v-if="isExpanded" class="text-h6 font-weight-bold text-no-wrap">EasyLife</span>
+      </div>
+      <VBtn
+        v-if="mdAndUp && isExpanded"
+        icon
+        variant="text"
+        size="small"
+        class="flex-shrink-0 ml-auto"
+        :aria-label="isPinned ? 'ปลดล็อคเมนู' : 'ปักหมุดเมนู'"
+        :title="isPinned ? 'ปลดล็อคเมนู' : 'ปักหมุดเมนู'"
+        @click.stop="togglePin"
+      >
+        <VIcon
+          :icon="isPinned ? 'mdi-record-circle-outline' : 'mdi-circle-outline'"
+          size="22"
+        />
+      </VBtn>
     </div>
     <VDivider />
-    <VList class="px-3 py-4" nav>
-      <VListSubheader>เมนูหลัก</VListSubheader>
+    <VList :class="isExpanded ? 'px-3 py-4' : 'px-2 py-4'" nav>
+      <VListSubheader v-if="isExpanded">เมนูหลัก</VListSubheader>
       <VListItem
         v-for="item in navItems"
         :key="item.to"
@@ -95,8 +145,9 @@ async function logout() {
       />
     </VList>
     <template #append>
-      <div class="pa-3">
+      <div :class="isExpanded ? 'pa-3 text-center' : 'py-3 text-center'">
         <VBtn
+          v-if="isExpanded"
           block
           variant="text"
           prepend-icon="mdi-logout"
@@ -105,15 +156,15 @@ async function logout() {
         >
           ออกจากระบบ
         </VBtn>
-        <p class="mt-2 text-center text-caption text-medium-emphasis">
-          Theme inspired by
-          <a
-            href="https://themeselection.com/item/materio-free-vuetify-vuejs-admin-template/"
-            target="_blank"
-            rel="noreferrer"
-            class="text-primary"
-          >Materio</a>
-        </p>
+        <VBtn
+          v-else
+          icon="mdi-logout"
+          variant="text"
+          color="secondary"
+          aria-label="ออกจากระบบ"
+          title="ออกจากระบบ"
+          @click="logout"
+        />
       </div>
     </template>
   </VNavigationDrawer>
@@ -121,6 +172,7 @@ async function logout() {
   <VAppBar flat border height="68">
     <VAppBarNavIcon v-if="!mdAndUp" aria-label="เปิดเมนู" @click="drawer = !drawer" />
     <VBtn
+      v-if="showBackButton"
       icon="mdi-arrow-left"
       variant="text"
       aria-label="ย้อนกลับ"

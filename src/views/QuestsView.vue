@@ -95,6 +95,7 @@ const history = computed(() => {
 
 function emptyForm(): QuestDraft {
   return {
+    id: undefined,
     title: "",
     description: "",
     priority: "normal",
@@ -137,13 +138,14 @@ onMounted(() => {
 });
 
 function openNew(date = selectedDate.value) {
+  form.id = undefined;
   Object.assign(form, emptyForm(), { startDate: date });
   dialog.value = true;
 }
 
 function openEdit(occurrence: QuestOccurrence) {
   const { task, schedule } = occurrence;
-  Object.assign(form, {
+  Object.assign(form, emptyForm(), {
     id: task.id,
     title: task.title,
     description: task.description ?? "",

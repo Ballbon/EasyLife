@@ -43,16 +43,29 @@ npm.cmd run dev
 
 ## คำสั่งสำคัญ
 
-| คำสั่ง                 | หน้าที่                                              |
-| ---------------------- | ---------------------------------------------------- |
-| `npm.cmd run dev`      | เปิด Vite development server                         |
-| `npm.cmd run preview`  | เปิดดู production build                              |
-| `npm.cmd run check`    | รัน lint, typecheck, unit tests และ production build |
-| `npm.cmd run db:start` | เปิด Supabase local stack                            |
-| `npm.cmd run db:stop`  | ปิด Supabase local stack                             |
-| `npm.cmd run db:reset` | สร้างฐานข้อมูลใหม่จาก migrations และ seed            |
-| `npm.cmd run db:test`  | รัน pgTAP database/RLS tests                         |
-| `npm.cmd run db:types` | สร้าง TypeScript types จาก local database            |
+| คำสั่ง                          | หน้าที่                                                        |
+| ------------------------------- | -------------------------------------------------------------- |
+| `npm.cmd run dev`               | เปิด Vite development server                                   |
+| `npm.cmd run preview`           | เปิดดู production build                                        |
+| `npm.cmd run check`             | รัน static checks, unit tests, build, performance และ security |
+| `npm.cmd run test:coverage`     | รัน unit tests พร้อมตรวจ coverage threshold                    |
+| `npm.cmd run test:e2e`          | รัน Playwright user flows กับ Supabase local                   |
+| `npm.cmd run security:check`    | ตรวจ secrets/public env และ dependency vulnerabilities         |
+| `npm.cmd run performance:check` | build และตรวจขนาดไฟล์ตาม performance budget                    |
+| `npm.cmd run db:start`          | เปิด Supabase local stack                                      |
+| `npm.cmd run db:stop`           | ปิด Supabase local stack                                       |
+| `npm.cmd run db:reset`          | สร้างฐานข้อมูลใหม่จาก migrations และ seed                      |
+| `npm.cmd run db:test`           | รัน pgTAP database integration/RLS tests                       |
+| `npm.cmd run db:types`          | สร้าง TypeScript types จาก local database                      |
+
+ก่อนรัน E2E ครั้งแรก ให้เปิด Docker Desktop และติดตั้ง Chromium จากนั้นเตรียมฐานข้อมูล local:
+
+```powershell
+npx.cmd playwright install chromium
+npm.cmd run db:start
+npm.cmd run db:reset
+npm.cmd run test:e2e
+```
 
 บน PowerShell เครื่องที่มี execution policy เข้มงวด ให้ใช้ `npm.cmd` และ `npx.cmd` ตามตัวอย่างแทน `npm`/`npx`
 

@@ -101,26 +101,27 @@ EasyLife คือเว็บแอปแบบ Mobile-first สำหรับ
 ## 5. Tech Stack
 
 | ส่วน | เทคโนโลยี |
+
 - Main Framework: Vue3 (Typescript)
 - UI Libs: Vuetify
 - Build Tools: Vite
 - Theme : Materio
 - Test Tools: Vitest
-|---|---|
-| Icons | Lucide Icons |
-| Database | Supabase PostgreSQL |
-| Authentication | Supabase Auth |
-| Authorization | PostgreSQL Row Level Security |
-| Validation | Zod |
-| Forms | React Hook Form |
-| Charts | Recharts |
-| Date utilities | date-fns |
-| Unit tests | Vitest |
-| End-to-end tests | Playwright |
-| CI/CD | GitHub Actions |
-| Hosting | Vercel |
-| Database hosting | Supabase Cloud |
-| Error monitoring | Sentry หลังจบ MVP |
+  |---|---|
+  | Icons | Lucide Icons |
+  | Database | Supabase PostgreSQL |
+  | Authentication | Supabase Auth |
+  | Authorization | PostgreSQL Row Level Security |
+  | Validation | Zod |
+  | Forms | React Hook Form |
+  | Charts | Recharts |
+  | Date utilities | date-fns |
+  | Unit tests | Vitest |
+  | End-to-end tests | Playwright |
+  | CI/CD | GitHub Actions |
+  | Hosting | Vercel |
+  | Database hosting | Supabase Cloud |
+  | Error monitoring | Sentry หลังจบ MVP |
 
 ## 6. สถาปัตยกรรมระบบ
 
@@ -373,16 +374,16 @@ Navigation บนมือถือ:
 
 ### Phase 7 — Testing and Security (สัปดาห์ที่ 7)
 
-- [ ] Unit tests สำหรับสูตรคำนวณทั้งหมด
-- [ ] Integration tests สำหรับ database queries
-- [ ] Database tests สำหรับ RLS policies
-- [ ] E2E tests สำหรับ user flows หลัก
-- [ ] ทดสอบวันสิ้นเดือนและปีใหม่
-- [ ] ทดสอบ leap year
-- [ ] ทดสอบ timezone
-- [ ] ทดสอบ transaction แบบ transfer
-- [ ] ตรวจ environment variables และ secrets
-- [ ] ตรวจสอบ performance เบื้องต้น
+- [x] Unit tests สำหรับสูตรคำนวณทั้งหมด
+- [x] Integration tests สำหรับ database queries
+- [x] Database tests สำหรับ RLS policies
+- [x] E2E tests สำหรับ user flows หลัก
+- [x] ทดสอบวันสิ้นเดือนและปีใหม่
+- [x] ทดสอบ leap year
+- [x] ทดสอบ timezone
+- [x] ทดสอบ transaction แบบ transfer
+- [x] ตรวจ environment variables และ secrets
+- [x] ตรวจสอบ performance เบื้องต้น
 
 ### Phase 8 — Deployment (สัปดาห์ที่ 8)
 
@@ -501,15 +502,15 @@ Apply Production Migration
 
 ## 14. ความเสี่ยงและแนวทางป้องกัน
 
-| ความเสี่ยง | แนวทางป้องกัน |
-|---|---|
-| ยอดเงินคำนวณคลาดเคลื่อน | เก็บเงินเป็นจำนวนเต็มหน่วยสตางค์และเขียน unit tests |
-| ข้อมูลข้ามผู้ใช้ | เปิด RLS และทดสอบ policy ทุกตาราง |
-| รายงานผิดช่วงเดือน | กำหนด timezone เป็น Asia/Bangkok และทดสอบ boundary |
-| Scope ใหญ่เกินไป | ยึดรายการ MVP และเลื่อนฟีเจอร์เสริมออกไป |
-| ผู้ใช้ไม่บันทึกรายการต่อเนื่อง | ทำ Quick Add ให้ใช้ได้ภายในไม่กี่ขั้นตอน |
-| Database schema เปลี่ยนโดยไม่มีประวัติ | บังคับใช้ migrations และเก็บใน Git |
-| Production มีปัญหาแต่ไม่ทราบ | เพิ่ม error monitoring และ smoke tests |
+| ความเสี่ยง                             | แนวทางป้องกัน                                       |
+| -------------------------------------- | --------------------------------------------------- |
+| ยอดเงินคำนวณคลาดเคลื่อน                | เก็บเงินเป็นจำนวนเต็มหน่วยสตางค์และเขียน unit tests |
+| ข้อมูลข้ามผู้ใช้                       | เปิด RLS และทดสอบ policy ทุกตาราง                   |
+| รายงานผิดช่วงเดือน                     | กำหนด timezone เป็น Asia/Bangkok และทดสอบ boundary  |
+| Scope ใหญ่เกินไป                       | ยึดรายการ MVP และเลื่อนฟีเจอร์เสริมออกไป            |
+| ผู้ใช้ไม่บันทึกรายการต่อเนื่อง         | ทำ Quick Add ให้ใช้ได้ภายในไม่กี่ขั้นตอน            |
+| Database schema เปลี่ยนโดยไม่มีประวัติ | บังคับใช้ migrations และเก็บใน Git                  |
+| Production มีปัญหาแต่ไม่ทราบ           | เพิ่ม error monitoring และ smoke tests              |
 
 ## 15. งานแรกที่ควรเริ่ม
 

@@ -5,7 +5,6 @@ import PageState from "@/components/PageState.vue";
 import EmptyState from "@/components/ui/EmptyState.vue";
 import { downloadCsv, generateTransactionsCsv } from "@/lib/exportCsv";
 import { loadFinanceData, type FinanceData } from "@/lib/finance";
-import { useAppNavigation } from "@/lib/navigation";
 import { formatSatang } from "@/lib/money";
 import {
   formatBangkokDateTime,
@@ -17,7 +16,6 @@ import type { Transaction } from "@/types/finance";
 const loading = ref(true);
 const error = ref("");
 const data = ref<FinanceData>();
-const { goBack } = useAppNavigation();
 const filters = reactive({
   q: "",
   type: "",
@@ -124,18 +122,7 @@ function resetFilters() {
       <div class="d-flex flex-wrap align-end justify-space-between ga-4 mb-6">
         <div>
           <p class="text-body-2 text-medium-emphasis">การเงินของคุณ</p>
-          <div class="d-flex align-center ga-2 mt-1">
-            <VBtn
-              icon="mdi-arrow-left"
-              variant="tonal"
-              color="secondary"
-              size="small"
-              aria-label="ย้อนกลับ"
-              title="ย้อนกลับ"
-              @click="goBack('/dashboard')"
-            />
-            <h1 class="page-title mb-0">รายการทั้งหมด</h1>
-          </div>
+          <h1 class="page-title mt-1 mb-0">รายการทั้งหมด</h1>
         </div>
         <div class="d-flex ga-2">
           <VBtn

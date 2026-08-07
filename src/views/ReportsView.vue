@@ -6,7 +6,6 @@ import DailyCashflowChart from "@/components/DailyCashflowChart.vue";
 import PageState from "@/components/PageState.vue";
 import { downloadCsv, generateTransactionsCsv } from "@/lib/exportCsv";
 import { loadFinanceData, type FinanceData } from "@/lib/finance";
-import { useAppNavigation } from "@/lib/navigation";
 import { formatSatang } from "@/lib/money";
 import {
   buildMonthlyReport,
@@ -20,7 +19,6 @@ import {
 const loading = ref(true);
 const error = ref("");
 const data = ref<FinanceData>();
-const { goBack } = useAppNavigation();
 const currentMonth = currentBangkokMonth();
 const selectedMonth = ref(currentMonth);
 const selectedMonthInput = computed({
@@ -126,18 +124,7 @@ const expenseChip = computed(() => {
       <header class="report-header mb-6">
         <div>
           <p class="text-overline text-primary">Monthly ledger</p>
-          <div class="d-flex align-center ga-2 mt-1">
-            <VBtn
-              icon="mdi-arrow-left"
-              variant="tonal"
-              color="secondary"
-              size="small"
-              aria-label="ย้อนกลับ"
-              title="ย้อนกลับ"
-              @click="goBack('/dashboard')"
-            />
-            <h1 class="page-title mb-0">รายงานการเงิน</h1>
-          </div>
+          <h1 class="page-title mt-1 mb-0">รายงานการเงิน</h1>
           <p class="mt-1 text-body-2 text-medium-emphasis">
             เปรียบเทียบพฤติกรรมการรับและใช้เงินเดือนต่อเดือน
           </p>

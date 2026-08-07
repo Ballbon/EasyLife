@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 
+import AllocationOverview from "@/components/AllocationOverview.vue";
 import CategoryBreakdown from "@/components/CategoryBreakdown.vue";
 import DailyCashflowChart from "@/components/DailyCashflowChart.vue";
 import PageState from "@/components/PageState.vue";
 import { loadFinanceData, type FinanceData } from "@/lib/finance";
-import { useAppNavigation } from "@/lib/navigation";
 import { calculateAccountBalance, formatSatang } from "@/lib/money";
+import { buildAllocationOverview } from "@/lib/plan-calculations";
 import {
   buildMonthlyReport,
   currentBangkokMonth,
@@ -23,7 +24,6 @@ import type { Transaction } from "@/types/finance";
 const loading = ref(true);
 const error = ref("");
 const data = ref<FinanceData>();
-const { goBack } = useAppNavigation();
 const month = currentBangkokMonth();
 
 async function loadData() {
@@ -47,6 +47,16 @@ const report = computed(() =>
     month,
     data.value?.transactions ?? [],
     data.value?.categories ?? [],
+  ),
+);
+const allocationOverview = computed(() =>
+  buildAllocationOverview(
+    month,
+    data.value?.plans ?? [],
+    data.value?.allocations ?? [],
+    data.value?.budgets ?? [],
+    data.value?.categories ?? [],
+    data.value?.transactions ?? [],
   ),
 );
 const today = computed(() => todayTotals(data.value?.transactions ?? []));
@@ -100,20 +110,9 @@ function typeIcon(type: string) {
       >
         <div>
           <p class="text-body-2 text-medium-emphasis">{{ dateLabel }}</p>
-          <div class="d-flex align-center ga-2 mt-1">
-            <VBtn
-              icon="mdi-arrow-left"
-              variant="tonal"
-              color="secondary"
-              size="small"
-              aria-label="ย้อนกลับ"
-              title="ย้อนกลับ"
-              @click="goBack('/')"
-            />
-            <h1 class="page-title mb-0">
-              สวัสดี {{ data.profile.display_name ?? "ผู้ใช้ EasyLife" }}
-            </h1>
-          </div>
+          <h1 class="page-title mt-1 mb-0">
+            สวัสดี {{ data.profile.display_name ?? "ผู้ใช้ EasyLife" }}
+          </h1>
           <p class="mt-1 text-body-2 text-medium-emphasis">
             ภาพรวมที่ควรรู้ก่อนเริ่มใช้เงินวันนี้
           </p>
@@ -220,6 +219,9 @@ function typeIcon(type: string) {
           </VCard>
         </VCol>
       </VRow>
+
+      <!-- PRE-SPENDING MONEY ALLOCATION (วางเงินก่อนใช้จริง) CARD -->
+      <AllocationOverview :overview="allocationOverview" :month="month" />
 
       <VRow class="mb-2">
         <VCol cols="12" lg="8">
