@@ -387,16 +387,16 @@ Navigation บนมือถือ:
 
 ### Phase 8 — Deployment (สัปดาห์ที่ 8)
 
-- [ ] สร้าง Supabase production project
-- [ ] Apply production migrations
-- [ ] ตรวจ RLS policies ใน production
-- [ ] เชื่อม repository กับ Vercel
-- [ ] ตั้ง production environment variables
-- [ ] Deploy production
+- [x] สร้าง Supabase production project
+- [x] Apply production migrations
+- [x] ตรวจ RLS policies ใน production
+- [x] เชื่อม repository กับ Vercel
+- [x] ตั้ง production environment variables
+- [x] Deploy production
 - [ ] ตั้ง custom domain
-- [ ] เปิด database backup
+- [x] เปิด database backup
 - [ ] เพิ่ม error monitoring
-- [ ] ทำ production smoke test
+- [x] ทำ production smoke test
 - [ ] ทดสอบกับผู้ใช้กลุ่มเล็ก 5–10 คน
 - [ ] เก็บ feedback และจัดลำดับงานรอบถัดไป
 
