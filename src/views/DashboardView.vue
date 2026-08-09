@@ -34,7 +34,7 @@ async function loadData() {
   try {
     data.value = await loadFinanceData();
   } catch {
-    error.value = "โหลดภาพรวมการเงินไม่สำเร็จ กรุณาลองใหม่";
+    error.value = t("components.pageState.error");
   } finally {
     loading.value = false;
   }

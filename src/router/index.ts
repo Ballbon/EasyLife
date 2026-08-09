@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 
+import { i18n } from "@/i18n";
 import { supabase } from "@/lib/supabase";
 
 export const router = createRouter({
@@ -14,27 +15,27 @@ export const router = createRouter({
     {
       path: "/register",
       component: () => import("@/views/auth/AuthView.vue"),
-      meta: { guest: true, mode: "register", title: "สมัครสมาชิก" },
+      meta: { guest: true, mode: "register", title: "สมัครสมาชิก", titleKey: "routes.register" },
     },
     {
       path: "/forgot-password",
       component: () => import("@/views/auth/AuthView.vue"),
-      meta: { guest: true, mode: "forgot", title: "ลืมรหัสผ่าน" },
+      meta: { guest: true, mode: "forgot", title: "ลืมรหัสผ่าน", titleKey: "routes.forgotPassword" },
     },
     {
       path: "/reset-password",
       component: () => import("@/views/auth/AuthView.vue"),
-      meta: { mode: "reset", title: "ตั้งรหัสผ่านใหม่" },
+      meta: { mode: "reset", title: "ตั้งรหัสผ่านใหม่", titleKey: "routes.resetPassword" },
     },
     {
       path: "/auth/callback",
       component: () => import("@/views/auth/AuthCallbackView.vue"),
-      meta: { public: true, title: "กำลังยืนยันบัญชี" },
+      meta: { public: true, title: "กำลังยืนยันบัญชี", titleKey: "routes.authCallback" },
     },
     {
       path: "/onboarding",
       component: () => import("@/views/OnboardingView.vue"),
-      meta: { title: "ตั้งค่าเริ่มต้น" },
+      meta: { title: "ตั้งค่าเริ่มต้น", titleKey: "routes.onboarding" },
     },
     {
       path: "/",
@@ -68,12 +69,12 @@ export const router = createRouter({
         {
           path: "transactions/new",
           component: () => import("@/views/TransactionFormView.vue"),
-          meta: { title: "เพิ่มรายการ" },
+          meta: { title: "เพิ่มรายการ", titleKey: "routes.transactionNew" },
         },
         {
           path: "transactions/:id/edit",
           component: () => import("@/views/TransactionFormView.vue"),
-          meta: { title: "แก้ไขรายการ" },
+          meta: { title: "แก้ไขรายการ", titleKey: "routes.transactionEdit" },
         },
         {
           path: "settings/accounts",
@@ -88,7 +89,7 @@ export const router = createRouter({
         {
           path: "offline",
           component: () => import("@/views/OfflineView.vue"),
-          meta: { title: "ออฟไลน์", public: true },
+          meta: { title: "ออฟไลน์", titleKey: "routes.offline", public: true },
         },
       ],
     },
@@ -98,7 +99,9 @@ export const router = createRouter({
 });
 
 router.beforeEach(async (to) => {
-  document.title = `${String(to.meta.title ?? "EasyLife")} | EasyLife`;
+  const titleKey = to.meta.titleKey as string | undefined;
+  const titleText = titleKey && i18n.global.te(titleKey) ? i18n.global.t(titleKey) : (to.meta.title ?? "EasyLife");
+  document.title = `${String(titleText)} | EasyLife`;
   if (to.meta.public) return true;
 
   const { data } = await supabase.auth.getSession();

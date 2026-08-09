@@ -24,8 +24,8 @@ function toggleLocale() {
     variant="text"
     density="comfortable"
     icon
-    aria-label="เปลี่ยนภาษา"
-    title="Change Language / เปลี่ยนภาษา"
+    :aria-label="$t('common.language')"
+    :title="$t('common.language')"
     @click="toggleLocale"
   >
     <span class="text-subtitle-2 font-weight-bold">

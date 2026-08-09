@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 
 import CategoryBreakdown from "@/components/CategoryBreakdown.vue";
 import DailyCashflowChart from "@/components/DailyCashflowChart.vue";
@@ -16,6 +17,7 @@ import {
   previousMonth,
 } from "@/lib/reports";
 
+const { t } = useI18n();
 const loading = ref(true);
 const error = ref("");
 const data = ref<FinanceData>();
@@ -36,7 +38,7 @@ async function loadData() {
   try {
     data.value = await loadFinanceData();
   } catch {
-    error.value = "โหลดรายงานไม่สำเร็จ กรุณาลองใหม่";
+    error.value = t("reports.loadError");
   } finally {
     loading.value = false;
   }
@@ -96,9 +98,13 @@ function moveMonth(direction: -1 | 1) {
 }
 
 function formatDifference(diffSatang: number): string {
-  if (diffSatang > 0) return `เพิ่มขึ้น ${formatSatang(diffSatang)}`;
-  if (diffSatang < 0) return `ลดลง ${formatSatang(Math.abs(diffSatang))}`;
-  return "เท่ากับเดือนก่อน";
+  if (diffSatang > 0)
+    return t("reports.increasedBy", { amount: formatSatang(diffSatang) });
+  if (diffSatang < 0)
+    return t("reports.decreasedBy", {
+      amount: formatSatang(Math.abs(diffSatang)),
+    });
+  return t("reports.sameAsLastMonth");
 }
 
 const incomeChip = computed(() => {
@@ -123,10 +129,10 @@ const expenseChip = computed(() => {
     <div v-if="data" class="reports-page">
       <header class="d-flex flex-wrap align-center justify-space-between ga-4 mb-6">
         <div>
-          <p class="text-caption font-weight-medium text-disabled mb-1">Monthly ledger</p>
-          <h1 class="page-title mb-0">รายงานการเงิน</h1>
+          <p class="text-caption font-weight-medium text-disabled mb-1">{{ $t('reports.monthlyLedger') }}</p>
+          <h1 class="page-title mb-0">{{ $t('reports.pageTitle') }}</h1>
           <p class="text-body-2 text-medium-emphasis mt-1 mb-0">
-            เปรียบเทียบพฤติกรรมการรับและใช้เงินเดือนต่อเดือน
+            {{ $t('reports.pageSubtitle') }}
           </p>
         </div>
         <div class="d-flex flex-wrap align-center ga-3">
@@ -137,18 +143,18 @@ const expenseChip = computed(() => {
             class="text-none font-weight-medium border-opacity-75 rounded-lg"
             @click="handleExportCsv"
           >
-            ส่งออก CSV
+            {{ $t('transactions.exportCsv') }}
           </VBtn>
-          <div class="month-control" aria-label="เลือกเดือนที่ต้องการดูรายงาน">
+          <div class="month-control" :aria-label="$t('reports.selectMonth')">
             <VBtn
               icon="mdi-chevron-left"
               variant="text"
               size="small"
-              aria-label="เดือนก่อนหน้า"
+              :aria-label="$t('reports.prevMonth')"
               @click="moveMonth(-1)"
             />
             <label>
-              <span class="sr-only">เดือนรายงาน</span>
+              <span class="sr-only">{{ $t('reports.reportMonthLabel') }}</span>
               <input
                 v-model="selectedMonthInput"
                 type="month"
@@ -159,7 +165,7 @@ const expenseChip = computed(() => {
               icon="mdi-chevron-right"
               variant="text"
               size="small"
-              aria-label="เดือนถัดไป"
+              :aria-label="$t('reports.nextMonth')"
               :disabled="selectedMonth >= currentMonth"
               @click="moveMonth(1)"
             />
@@ -170,22 +176,22 @@ const expenseChip = computed(() => {
       <VCard class="report-hero mb-6 pa-6 pa-md-8 rounded-xl">
         <div class="report-hero-grid">
           <div>
-            <p class="text-body-2 hero-muted mb-1">กระแสเงินสดสุทธิ</p>
+            <p class="text-body-2 hero-muted mb-1">{{ $t('reports.netCashflow') }}</p>
             <p class="report-net my-2">
               {{ report.net >= 0 ? "+" : "" }}{{ formatSatang(report.net) }}
             </p>
             <p class="text-body-2 hero-muted mb-0">
-              {{ formatReportMonth(selectedMonth) }} · {{ report.transactionCount }} รายการ
+              {{ formatReportMonth(selectedMonth) }} · {{ $t('reports.transactionCount', { count: report.transactionCount }) }}
             </p>
           </div>
           <div class="hero-flow rounded-lg">
             <div>
-              <span>เงินเข้า</span>
+              <span>{{ $t('reports.moneyIn') }}</span>
               <strong class="text-emerald-300">{{ formatSatang(report.income) }}</strong>
             </div>
             <VIcon icon="mdi-arrow-right" class="d-none d-sm-inline-flex" />
             <div>
-              <span>เงินออก</span>
+              <span>{{ $t('reports.moneyOut') }}</span>
               <strong class="text-rose-300">{{ formatSatang(report.expense) }}</strong>
             </div>
           </div>
@@ -198,7 +204,7 @@ const expenseChip = computed(() => {
             <div class="d-flex justify-space-between align-start ga-4">
               <div>
                 <p class="text-body-2 text-medium-emphasis mb-1">
-                  รายรับเทียบเดือนก่อน
+                  {{ $t('reports.incomeVsPrev') }}
                 </p>
                 <p class="text-h5 font-weight-bold my-1">
                   {{ formatSatang(report.income) }}
@@ -218,7 +224,7 @@ const expenseChip = computed(() => {
             <div class="d-flex justify-space-between align-start ga-4">
               <div>
                 <p class="text-body-2 text-medium-emphasis mb-1">
-                  รายจ่ายเทียบเดือนก่อน
+                  {{ $t('reports.expenseVsPrev') }}
                 </p>
                 <p class="text-h5 font-weight-bold my-1">
                   {{ formatSatang(report.expense) }}
@@ -241,32 +247,31 @@ const expenseChip = computed(() => {
         <VCol cols="12" lg="8">
           <VCard class="materio-card h-100 pa-6 rounded-xl">
             <div class="mb-4">
-              <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">วันที่เงินขยับ</p>
-              <h2 class="text-subtitle-1 font-weight-bold mb-0">กระแสเงินสดรายวัน</h2>
+              <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">{{ $t('reports.dailyTagline') }}</p>
+              <h2 class="text-subtitle-1 font-weight-bold mb-0">{{ $t('reports.dailyTitle') }}</h2>
               <p class="text-body-2 text-medium-emphasis mt-1 mb-0">
-                มองหาวันที่รายจ่ายพุ่ง เพื่อย้อนดูว่าเกิดจากอะไร
+                {{ $t('reports.dailySubtitle') }}
               </p>
             </div>
             <DailyCashflowChart :data="report.daily" />
             <div v-if="report.transactionCount === 0" class="chart-empty">
               <VIcon icon="mdi-chart-timeline-variant-shimmer" size="34" />
-              <span>ยังไม่มีรายการในเดือนนี้</span>
+              <span>{{ $t('reports.noTransactionsThisMonth') }}</span>
             </div>
           </VCard>
         </VCol>
         <VCol cols="12" lg="4">
           <VCard class="materio-card h-100 pa-6 rounded-xl">
-            <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">สัดส่วนรายจ่าย</p>
-            <h2 class="text-subtitle-1 font-weight-bold mb-1">หมวดที่ใช้เงิน</h2>
+            <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">{{ $t('reports.categoryTagline') }}</p>
+            <h2 class="text-subtitle-1 font-weight-bold mb-1">{{ $t('reports.categoryTitle') }}</h2>
             <p
               v-if="report.categories[0]"
               class="text-body-2 text-medium-emphasis mb-4"
             >
-              {{ report.categories[0].name }} สูงสุดที่
-              {{ report.categories[0].percentage.toFixed(1) }}%
+              {{ $t('reports.highestCategoryText', { name: report.categories[0].name, percentage: report.categories[0].percentage.toFixed(1) }) }}
             </p>
             <p v-else class="text-body-2 text-medium-emphasis mb-4">
-              รายจ่ายจะแสดงที่นี่เมื่อเริ่มบันทึก
+              {{ $t('reports.categoriesEmpty') }}
             </p>
             <CategoryBreakdown :categories="report.categories" />
           </VCard>

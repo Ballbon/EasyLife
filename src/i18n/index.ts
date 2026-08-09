@@ -7,12 +7,18 @@ export type SupportedLocale = 'th' | 'en'
 const STORAGE_KEY = 'user_locale'
 
 function getInitialLocale(): SupportedLocale {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return 'th'
+  }
+
   const savedLocale = localStorage.getItem(STORAGE_KEY) as SupportedLocale | null
   if (savedLocale && (savedLocale === 'th' || savedLocale === 'en')) {
     return savedLocale
   }
 
-  const browserLang = navigator.language.toLowerCase()
+  const browserLang = (typeof navigator !== 'undefined' && navigator.language)
+    ? navigator.language.toLowerCase()
+    : 'th'
   if (browserLang.startsWith('th')) {
     return 'th'
   }
@@ -36,5 +42,7 @@ export function setLocale(locale: SupportedLocale): void {
   } else {
     ;(i18n.global.locale as any).value = locale
   }
-  localStorage.setItem(STORAGE_KEY, locale)
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(STORAGE_KEY, locale)
+  }
 }
