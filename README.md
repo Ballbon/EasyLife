@@ -4,10 +4,11 @@
 
 ## Tech stack
 
-- Next.js 16 App Router, React 19 และ TypeScript
-- Tailwind CSS 4 และ shadcn/ui
+- Vue 3, TypeScript และ Vue Router
+- Vuetify 3 พร้อม Materio theme
+- Vite สำหรับ development และ production build
 - Supabase PostgreSQL, Auth และ Row Level Security
-- Zod, React Hook Form และ date-fns
+- Zod สำหรับ validation
 - Vitest, ESLint และ Prettier
 
 รายละเอียดผลิตภัณฑ์อยู่ใน [PRODUCT_SPEC.md](./PRODUCT_SPEC.md) และ roadmap อยู่ใน [PLAN.md](./PLAN.md)
@@ -26,9 +27,8 @@ npx.cmd supabase status
 นำค่า API URL และ publishable key จาก `supabase status` ใส่ใน `.env.local`:
 
 ```dotenv
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=ค่าจาก-supabase-status
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+VITE_SUPABASE_URL=http://127.0.0.1:54321
+VITE_SUPABASE_PUBLISHABLE_KEY=ค่าจาก-supabase-status
 ```
 
 จากนั้นเตรียมฐานข้อมูลและเปิดแอป:
@@ -43,15 +43,29 @@ npm.cmd run dev
 
 ## คำสั่งสำคัญ
 
-| คำสั่ง                 | หน้าที่                                              |
-| ---------------------- | ---------------------------------------------------- |
-| `npm.cmd run dev`      | เปิด Next.js development server                      |
-| `npm.cmd run check`    | รัน lint, typecheck, unit tests และ production build |
-| `npm.cmd run db:start` | เปิด Supabase local stack                            |
-| `npm.cmd run db:stop`  | ปิด Supabase local stack                             |
-| `npm.cmd run db:reset` | สร้างฐานข้อมูลใหม่จาก migrations และ seed            |
-| `npm.cmd run db:test`  | รัน pgTAP database/RLS tests                         |
-| `npm.cmd run db:types` | สร้าง TypeScript types จาก local database            |
+| คำสั่ง                          | หน้าที่                                                        |
+| ------------------------------- | -------------------------------------------------------------- |
+| `npm.cmd run dev`               | เปิด Vite development server                                   |
+| `npm.cmd run preview`           | เปิดดู production build                                        |
+| `npm.cmd run check`             | รัน static checks, unit tests, build, performance และ security |
+| `npm.cmd run test:coverage`     | รัน unit tests พร้อมตรวจ coverage threshold                    |
+| `npm.cmd run test:e2e`          | รัน Playwright user flows กับ Supabase local                   |
+| `npm.cmd run security:check`    | ตรวจ secrets/public env และ dependency vulnerabilities         |
+| `npm.cmd run performance:check` | build และตรวจขนาดไฟล์ตาม performance budget                    |
+| `npm.cmd run db:start`          | เปิด Supabase local stack                                      |
+| `npm.cmd run db:stop`           | ปิด Supabase local stack                                       |
+| `npm.cmd run db:reset`          | สร้างฐานข้อมูลใหม่จาก migrations และ seed                      |
+| `npm.cmd run db:test`           | รัน pgTAP database integration/RLS tests                       |
+| `npm.cmd run db:types`          | สร้าง TypeScript types จาก local database                      |
+
+ก่อนรัน E2E ครั้งแรก ให้เปิด Docker Desktop และติดตั้ง Chromium จากนั้นเตรียมฐานข้อมูล local:
+
+```powershell
+npx.cmd playwright install chromium
+npm.cmd run db:start
+npm.cmd run db:reset
+npm.cmd run test:e2e
+```
 
 บน PowerShell เครื่องที่มี execution policy เข้มงวด ให้ใช้ `npm.cmd` และ `npx.cmd` ตามตัวอย่างแทน `npm`/`npx`
 
@@ -59,10 +73,13 @@ npm.cmd run dev
 
 ```text
 src/
-  app/                 routes, Server Actions และ auth callback
-  components/          UI, auth และ onboarding components
-  lib/supabase/        browser/server clients และ session proxy
-  types/               form state และ generated database types
+  layouts/             Materio application shell และ navigation
+  router/              Vue Router routes และ authentication guard
+  views/               หน้าจอ auth, dashboard, transactions และ settings
+  components/          shared Vue components
+  lib/                 Supabase client และ business logic
+  plugins/             Vuetify/Materio theme configuration
+  types/               app types และ generated database types
 supabase/
   migrations/          schema, constraints, triggers และ RLS policies
   tests/database/      pgTAP RLS tests
@@ -71,8 +88,8 @@ supabase/
 
 ## Security baseline
 
-- Proxy ใช้ `supabase.auth.getClaims()` เพื่อตรวจ JWT และ refresh cookie
-- Server Actions ตรวจ authentication ซ้ำก่อนแก้ข้อมูล
+- Vue Router guard ตรวจ session ก่อนเข้า protected routes
+- Data actions ตรวจผู้ใช้ซ้ำก่อนแก้ข้อมูล
 - ตารางข้อมูลส่วนตัวเปิด RLS และ policy อ้างอิง `auth.uid()`
 - Foreign keys แบบ `(resource_id, user_id)` ป้องกันการอ้าง resource ของผู้ใช้อื่น
 - Environment secrets และ `.env.local` ไม่ถูก commit

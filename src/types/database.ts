@@ -198,6 +198,42 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_goals: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          saved_amount_satang: number
+          target_amount_satang: number
+          target_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          saved_amount_satang?: number
+          target_amount_satang: number
+          target_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          saved_amount_satang?: number
+          target_amount_satang?: number
+          target_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plan_allocations: {
         Row: {
           allocation_type: string
@@ -450,10 +486,10 @@ export type Database = {
           },
           {
             foreignKeyName: "transactions_category_owner_fk"
-            columns: ["category_id", "user_id"]
+            columns: ["category_id", "user_id", "transaction_type"]
             isOneToOne: false
             referencedRelation: "categories"
-            referencedColumns: ["id", "user_id"]
+            referencedColumns: ["id", "user_id", "transaction_type"]
           },
           {
             foreignKeyName: "transactions_destination_owner_fk"
@@ -475,6 +511,37 @@ export type Database = {
           account_type_input: string
           display_name_input: string
           initial_balance_satang_input: number
+        }
+        Returns: undefined
+      }
+      save_financial_plan: {
+        Args: {
+          allocations_input: Json
+          expected_income_satang_input: number
+          month_input: string
+        }
+        Returns: string
+      }
+      save_quest: {
+        Args: {
+          days_of_week_input: number[] | null
+          description_input: string
+          end_date_input: string | null
+          frequency_input: string
+          points_input: number
+          priority_input: string
+          scheduled_time_input: string | null
+          start_date_input: string
+          task_id_input: string | null
+          title_input: string
+        }
+        Returns: string
+      }
+      set_quest_completion: {
+        Args: {
+          completed_input: boolean
+          scheduled_date_input: string
+          task_id_input: string
         }
         Returns: undefined
       }
@@ -613,4 +680,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-

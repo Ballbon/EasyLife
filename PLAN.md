@@ -72,6 +72,8 @@ EasyLife คือเว็บแอปแบบ Mobile-first สำหรับ
 - ตรวจสอบว่าสัดส่วนรวมไม่เกิน 100%
 - เปรียบเทียบยอดตามแผนกับยอดที่ใช้จริง
 - คัดลอกแผนจากเดือนก่อน
+- สร้างเป้าหมาย เช่น เงินฉุกเฉินหรือเงินท่องเที่ยว
+- แสดงความคืบหน้าของแต่ละเป้าหมาย
 
 ### 3.6 Daily Quest
 
@@ -93,31 +95,33 @@ EasyLife คือเว็บแอปแบบ Mobile-first สำหรับ
 - Native application สำหรับ iOS และ Android
 - หลายสกุลเงิน
 - ระบบลงทุนเต็มรูปแบบ
-- เป้าหมายออมเงินและการติดตามเงินสะสม (Financial Goal)
 - Gamification ระดับสูง เช่น badge, level และ achievement
 - Offline synchronization เต็มรูปแบบ
 
 ## 5. Tech Stack
 
-| ส่วน             | เทคโนโลยี                       |
-| ---------------- | ------------------------------- |
-| Application      | Next.js App Router + TypeScript |
-| Styling          | Tailwind CSS                    |
-| UI components    | shadcn/ui                       |
-| Icons            | Lucide Icons                    |
-| Database         | Supabase PostgreSQL             |
-| Authentication   | Supabase Auth                   |
-| Authorization    | PostgreSQL Row Level Security   |
-| Validation       | Zod                             |
-| Forms            | React Hook Form                 |
-| Charts           | Recharts                        |
-| Date utilities   | date-fns                        |
-| Unit tests       | Vitest                          |
-| End-to-end tests | Playwright                      |
-| CI/CD            | GitHub Actions                  |
-| Hosting          | Vercel                          |
-| Database hosting | Supabase Cloud                  |
-| Error monitoring | Sentry หลังจบ MVP               |
+| ส่วน | เทคโนโลยี |
+
+- Main Framework: Vue3 (Typescript)
+- UI Libs: Vuetify
+- Build Tools: Vite
+- Theme : Materio
+- Test Tools: Vitest
+  |---|---|
+  | Icons | Lucide Icons |
+  | Database | Supabase PostgreSQL |
+  | Authentication | Supabase Auth |
+  | Authorization | PostgreSQL Row Level Security |
+  | Validation | Zod |
+  | Forms | React Hook Form |
+  | Charts | Recharts |
+  | Date utilities | date-fns |
+  | Unit tests | Vitest |
+  | End-to-end tests | Playwright |
+  | CI/CD | GitHub Actions |
+  | Hosting | Vercel |
+  | Database hosting | Supabase Cloud |
+  | Error monitoring | Sentry หลังจบ MVP |
 
 ## 6. สถาปัตยกรรมระบบ
 
@@ -276,6 +280,7 @@ Navigation บนมือถือ:
 - Categories
 - Monthly Budget
 - Financial Plan
+- Financial Goal
 - Daily Quest List
 - Quest Calendar
 - Quest History
@@ -287,28 +292,28 @@ Navigation บนมือถือ:
 
 ### Phase 0 — Product Specification (2–3 วัน)
 
-- [x] กำหนดกลุ่มผู้ใช้เริ่มต้น — ดู `PRODUCT_SPEC.md` ข้อ 2
-- [x] เขียนปัญหาหลักที่ผลิตภัณฑ์ต้องแก้ — ดู `PRODUCT_SPEC.md` ข้อ 3
-- [x] ยืนยันขอบเขต MVP — ดู `PRODUCT_SPEC.md` ข้อ 4
-- [x] เขียน user stories — ดู `PRODUCT_SPEC.md` ข้อ 5
-- [x] วาด user flow — ดู `PRODUCT_SPEC.md` ข้อ 6
-- [x] ทำ wireframe หน้าหลัก — ดู `PRODUCT_SPEC.md` ข้อ 8
-- [x] กำหนดกฎการคำนวณเงินและสิ้นเดือน — ดู `PRODUCT_SPEC.md` ข้อ 9–10
-- [x] กำหนด acceptance criteria — ดู `PRODUCT_SPEC.md` ข้อ 11
+- [ ] กำหนดกลุ่มผู้ใช้เริ่มต้น
+- [ ] เขียนปัญหาหลักที่ผลิตภัณฑ์ต้องแก้
+- [ ] ยืนยันขอบเขต MVP
+- [ ] เขียน user stories
+- [ ] วาด user flow
+- [ ] ทำ wireframe หน้าหลัก
+- [ ] กำหนดกฎการคำนวณเงินและสิ้นเดือน
+- [ ] กำหนด acceptance criteria
 
 ### Phase 1 — Project Foundation (สัปดาห์ที่ 1)
 
-- [x] สร้าง Next.js TypeScript project
-- [x] ติดตั้ง Tailwind CSS และ shadcn/ui
-- [x] ตั้งค่า ESLint และ formatter
-- [x] สร้าง Git repository (`main`)
-- [x] ตั้งค่า environment variables และ `.env.example`
-- [x] ตั้งค่า Supabase local development
-- [x] สร้าง database migrations และ generated TypeScript types
-- [x] สร้าง seed data สำหรับหมวดหมู่เริ่มต้น
-- [x] ทำระบบสมัครสมาชิก เข้าสู่ระบบ ออกจากระบบ และลืมรหัสผ่าน
-- [x] ทำ onboarding และ protected routes ด้วย Next.js Proxy
-- [x] สร้าง RLS policies ชุดแรกและ pgTAP tests
+- [ ] สร้าง Vue.js TypeScript project
+- [ ] ติดตั้ง Vuetify และ Materio
+- [ ] ตั้งค่า ESLint และ formatter
+- [ ] สร้าง Git repository
+- [ ] ตั้งค่า environment variables
+- [ ] ตั้งค่า Supabase local development
+- [ ] สร้าง database migrations
+- [ ] สร้าง seed data สำหรับหมวดหมู่เริ่มต้น
+- [ ] ทำระบบสมัครสมาชิกและเข้าสู่ระบบ
+- [ ] ทำ protected routes
+- [ ] สร้าง RLS policies ชุดแรก
 
 ### Phase 2 — Transactions (สัปดาห์ที่ 2)
 
@@ -324,72 +329,74 @@ Navigation บนมือถือ:
 
 ### Phase 3 — Dashboard and Reports (สัปดาห์ที่ 3)
 
-- [ ] สรุปรายรับและรายจ่ายวันนี้
-- [ ] สรุปรายเดือน
-- [ ] รายงานแยกตามหมวดหมู่
-- [ ] กราฟรายจ่ายรายวัน
-- [ ] กราฟสัดส่วนรายจ่าย
-- [ ] เปรียบเทียบเดือนก่อน
-- [ ] เลือกดูข้อมูลย้อนหลัง
-- [ ] ตรวจสอบผลลัพธ์ในเขตเวลา Asia/Bangkok
+- [x] สรุปรายรับและรายจ่ายวันนี้
+- [x] สรุปรายเดือน
+- [x] รายงานแยกตามหมวดหมู่
+- [x] กราฟรายจ่ายรายวัน
+- [x] กราฟสัดส่วนรายจ่าย
+- [x] เปรียบเทียบเดือนก่อน
+- [x] เลือกดูข้อมูลย้อนหลัง
+- [x] ตรวจสอบผลลัพธ์ในเขตเวลา Asia/Bangkok
 
 ### Phase 4 — Budget and Financial Plan (สัปดาห์ที่ 4)
 
-- [ ] ตั้งงบประมาณแยกตามหมวดหมู่
-- [ ] แสดงยอดใช้จริงเทียบกับงบ
-- [ ] สร้างแผนจัดสรรรายได้
-- [ ] รองรับเปอร์เซ็นต์และจำนวนคงที่
-- [ ] ตรวจยอดจัดสรรรวม
-- [ ] คัดลอกแผนจากเดือนก่อน
+- [x] ตั้งงบประมาณแยกตามหมวดหมู่
+- [x] แสดงยอดใช้จริงเทียบกับงบ
+- [x] สร้างแผนจัดสรรรายได้
+- [x] รองรับเปอร์เซ็นต์และจำนวนคงที่
+- [x] ตรวจยอดจัดสรรรวม
+- [x] คัดลอกแผนจากเดือนก่อน
+- [x] สร้างเป้าหมายทางการเงิน
+- [x] แสดง progress ของเป้าหมาย
 
 ### Phase 5 — Daily Quest (สัปดาห์ที่ 5)
 
-- [ ] สร้าง task แบบครั้งเดียว
-- [ ] สร้าง task แบบเกิดซ้ำ
-- [ ] รองรับการเลือกวันในสัปดาห์
-- [ ] ทำรายการเควสของวันนี้
-- [ ] ทำปฏิทินเควส
-- [ ] บันทึก completion
-- [ ] แสดงประวัติย้อนหลัง
-- [ ] เพิ่มคะแนนและ streak ขั้นพื้นฐาน
+- [x] สร้าง task แบบครั้งเดียว
+- [x] สร้าง task แบบเกิดซ้ำ
+- [x] รองรับการเลือกวันในสัปดาห์
+- [x] ทำรายการเควสของวันนี้
+- [x] ทำปฏิทินเควส
+- [x] บันทึก completion
+- [x] แสดงประวัติย้อนหลัง
+- [x] เพิ่มคะแนนและ streak ขั้นพื้นฐาน
 
 ### Phase 6 — UX and PWA (สัปดาห์ที่ 6)
 
-- [ ] ตรวจ responsive ทุกหน้า
-- [ ] สร้าง loading states
-- [ ] สร้าง empty states
-- [ ] สร้าง error states
-- [ ] ตรวจ accessibility
-- [ ] ทำ installable PWA
-- [ ] ทำ offline fallback page
-- [ ] เพิ่ม export CSV
-- [ ] ปรับ Quick Add ให้บันทึกรายการได้รวดเร็ว
+- [x] ตรวจ responsive ทุกหน้า
+- [x] สร้าง loading states
+- [x] สร้าง empty states
+- [x] สร้าง error states
+- [x] ตรวจ accessibility
+- [x] ทำ installable PWA
+- [x] ทำ offline fallback page
+- [x] เพิ่ม export CSV
+- [x] ปรับ Quick Add ให้บันทึกรายการได้รวดเร็ว
 
 ### Phase 7 — Testing and Security (สัปดาห์ที่ 7)
 
-- [ ] Unit tests สำหรับสูตรคำนวณทั้งหมด
-- [ ] Integration tests สำหรับ database queries
-- [ ] Database tests สำหรับ RLS policies
-- [ ] E2E tests สำหรับ user flows หลัก
-- [ ] ทดสอบวันสิ้นเดือนและปีใหม่
-- [ ] ทดสอบ leap year
-- [ ] ทดสอบ timezone
-- [ ] ทดสอบ transaction แบบ transfer
-- [ ] ตรวจ environment variables และ secrets
-- [ ] ตรวจสอบ performance เบื้องต้น
+- [x] Unit tests สำหรับสูตรคำนวณทั้งหมด
+- [x] Integration tests สำหรับ database queries
+- [x] Database tests สำหรับ RLS policies
+- [x] E2E tests สำหรับ user flows หลัก
+- [x] ทดสอบวันสิ้นเดือนและปีใหม่
+- [x] ทดสอบ leap year
+- [x] ทดสอบ timezone
+- [x] ทดสอบ transaction แบบ transfer
+- [x] ตรวจ environment variables และ secrets
+- [x] ตรวจสอบ performance เบื้องต้น
 
 ### Phase 8 — Deployment (สัปดาห์ที่ 8)
 
-- [ ] สร้าง Supabase production project
-- [ ] Apply production migrations
-- [ ] ตรวจ RLS policies ใน production
-- [ ] เชื่อม repository กับ Vercel
-- [ ] ตั้ง production environment variables
-- [ ] Deploy production
+- [x] สร้าง Supabase production project
+- [x] Apply production migrations
+- [x] ตรวจ RLS policies ใน production
+- [x] เชื่อม repository กับ Vercel
+- [x] ตั้ง production environment variables
+- [x] Deploy production
 - [ ] ตั้ง custom domain
-- [ ] เปิด database backup
+- [x] เปิด database backup
 - [ ] เพิ่ม error monitoring
-- [ ] ทำ production smoke test
+- [x] ทำ production smoke test
 - [ ] ทดสอบกับผู้ใช้กลุ่มเล็ก 5–10 คน
 - [ ] เก็บ feedback และจัดลำดับงานรอบถัดไป
 
