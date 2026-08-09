@@ -6,6 +6,7 @@ import { useDisplay } from "vuetify";
 import { useAppNavigation } from "@/lib/navigation";
 import { supabase } from "@/lib/supabase";
 import QuickAddDialog from "@/components/transactions/QuickAddDialog.vue";
+import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 import PWAInstallPrompt from "@/components/ui/PWAInstallPrompt.vue";
 import { useNetworkStatus } from "@/composables/useNetworkStatus";
 import { useThemeMode } from "@/composables/useThemeMode";
@@ -207,7 +208,7 @@ async function logout() {
           class="justify-start text-none rounded-lg"
           @click="logout"
         >
-          ออกจากระบบ
+          {{ $t('common.logout') }}
         </VBtn>
         <VBtn
           v-else
@@ -257,6 +258,7 @@ async function logout() {
           size="20"
         />
       </VBtn>
+      <LanguageSwitcher class="mr-1" />
       <VBtn
         color="primary"
         variant="flat"
