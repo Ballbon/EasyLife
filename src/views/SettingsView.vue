@@ -34,7 +34,7 @@ const categoryForm = reactive({
   name: "",
   transactionType: "expense",
   icon: "circle",
-  color: "#9155FD",
+  color: "#7C3AED",
 });
 const accountTypes = Object.entries(accountTypeLabels).map(
   ([value, title]) => ({ value, title }),
@@ -54,7 +54,7 @@ function resetCategoryForm() {
     name: "",
     transactionType: "expense",
     icon: "circle",
-    color: "#9155FD",
+    color: "#7C3AED",
   });
 }
 
@@ -146,7 +146,7 @@ async function addCategory() {
       name: "",
       transactionType: "expense",
       icon: "circle",
-      color: "#9155FD",
+      color: "#7C3AED",
     });
     success.value = "เพิ่มหมวดหมู่แล้ว";
     await refresh();
@@ -213,22 +213,24 @@ async function removeCategory(id: string) {
 
 <template>
   <PageState :loading="loading" :error="error && !data ? error : ''">
-    <div v-if="data">
+    <div v-if="data" class="settings-page">
       <div class="mb-6">
-        <p class="text-body-2 text-medium-emphasis">ปรับแต่งพื้นที่การเงิน</p>
-        <h1 class="page-title mt-1 mb-0">ตั้งค่าการเงิน</h1>
+        <p class="text-caption font-weight-medium text-disabled mb-1">ปรับแต่งพื้นที่การเงิน</p>
+        <h1 class="page-title mb-0">ตั้งค่าการเงิน</h1>
       </div>
-      <VTabs :model-value="tab" color="primary" class="mb-6">
+      <VTabs :model-value="tab" color="primary" class="mb-6" show-arrows>
         <VTab
           value="accounts"
           to="/settings/accounts"
           prepend-icon="mdi-wallet-outline"
+          class="text-none font-weight-semibold"
           >บัญชี</VTab
         >
         <VTab
           value="categories"
           to="/settings/categories"
           prepend-icon="mdi-shape-outline"
+          class="text-none font-weight-semibold"
           >หมวดหมู่</VTab
         >
       </VTabs>
@@ -237,7 +239,7 @@ async function removeCategory(id: string) {
         type="error"
         variant="tonal"
         closable
-        class="mb-5"
+        class="mb-5 rounded-lg"
         @click:close="error = ''"
         >{{ error }}</VAlert
       >
@@ -246,7 +248,7 @@ async function removeCategory(id: string) {
         type="success"
         variant="tonal"
         closable
-        class="mb-5"
+        class="mb-5 rounded-lg"
         @click:close="success = ''"
         >{{ success }}</VAlert
       >
@@ -257,22 +259,22 @@ async function removeCategory(id: string) {
             <VCard
               v-for="account in data.accounts"
               :key="account.id"
-              class="materio-card pa-5"
+              class="materio-card pa-5 rounded-xl"
               :class="{ 'opacity-60': !account.is_active }"
             >
               <div class="d-flex align-center ga-4">
-                <VAvatar color="primary" variant="tonal" rounded="lg"
-                  ><VIcon icon="mdi-wallet-outline"
+                <VAvatar color="primary" variant="tonal" rounded="lg" size="42"
+                  ><VIcon icon="mdi-wallet-outline" size="20"
                 /></VAvatar>
                 <div class="flex-grow-1">
-                  <p class="font-weight-semibold">{{ account.name }}</p>
-                  <p class="text-caption text-medium-emphasis">
+                  <p class="font-weight-bold text-body-2 mb-0">{{ account.name }}</p>
+                  <p class="text-caption text-medium-emphasis mb-0 mt-1">
                     {{ accountTypeLabels[account.account_type] }} ·
                     {{ account.is_active ? "ใช้งาน" : "ซ่อนอยู่" }}
                   </p>
                 </div>
                 <div class="text-right">
-                  <p class="font-weight-semibold">
+                  <p class="font-weight-bold text-body-2 mb-1">
                     {{
                       formatSatang(
                         calculateAccountBalance(
@@ -287,6 +289,7 @@ async function removeCategory(id: string) {
                     size="small"
                     variant="text"
                     color="secondary"
+                    class="text-none rounded-lg"
                     :prepend-icon="
                       account.is_active
                         ? 'mdi-eye-off-outline'
@@ -301,25 +304,28 @@ async function removeCategory(id: string) {
           </div>
         </VCol>
         <VCol cols="12" lg="4">
-          <VCard class="materio-card pa-6"
-            ><h2 class="text-h6 font-weight-semibold mb-5">เพิ่มบัญชี</h2>
+          <VCard class="materio-card pa-6 rounded-xl"
+            ><h2 class="text-subtitle-1 font-weight-bold mb-5">เพิ่มบัญชี</h2>
             <VForm @submit.prevent="addAccount"
               ><VTextField
                 v-model="accountForm.name"
                 label="ชื่อบัญชี"
-                class="mb-2"
+                class="mb-3"
+                rounded="lg"
               /><VSelect
                 v-model="accountForm.accountType"
                 label="ประเภท"
                 :items="accountTypes"
-                class="mb-2"
+                class="mb-3"
+                rounded="lg"
               /><VTextField
                 v-model="accountForm.initialBalance"
                 label="ยอดตั้งต้น (บาท)"
                 prefix="฿"
                 inputmode="decimal"
-                class="mb-3"
-              /><VBtn type="submit" color="primary" :loading="pending" block
+                class="mb-4"
+                rounded="lg"
+              /><VBtn type="submit" color="primary" class="text-none font-weight-medium rounded-lg" :loading="pending" block
                 >เพิ่มบัญชี</VBtn
               ></VForm
             ></VCard
@@ -336,7 +342,7 @@ async function removeCategory(id: string) {
               cols="12"
               sm="6"
               ><VCard
-                class="materio-card pa-5 h-100 category-card"
+                class="materio-card pa-5 h-100 category-card rounded-xl"
                 :class="{
                   'category-card--editing': editingCategoryId === category.id,
                 }"
@@ -346,11 +352,13 @@ async function removeCategory(id: string) {
                       color: category.color,
                       backgroundColor: `${category.color}18`,
                     }"
-                    ><VIcon :icon="categoryIcon(category.icon)"
+                    rounded="lg"
+                    size="40"
+                    ><VIcon :icon="categoryIcon(category.icon)" size="20"
                   /></VAvatar>
                   <div class="flex-grow-1">
-                    <p class="font-weight-semibold">{{ category.name }}</p>
-                    <p class="text-caption text-medium-emphasis">
+                    <p class="font-weight-bold text-body-2 mb-0">{{ category.name }}</p>
+                    <p class="text-caption text-medium-emphasis mb-0 mt-1">
                       {{
                         category.transaction_type === "expense"
                           ? "รายจ่าย"
@@ -380,9 +388,9 @@ async function removeCategory(id: string) {
                   </div></div></VCard></VCol></VRow
         ></VCol>
         <VCol cols="12" lg="4"
-          ><VCard class="materio-card pa-6"
+          ><VCard class="materio-card pa-6 rounded-xl"
             ><div class="d-flex align-center justify-space-between mb-5">
-              <h2 class="text-h6 font-weight-semibold">
+              <h2 class="text-subtitle-1 font-weight-bold mb-0">
                 {{ editingCategoryId ? "แก้ไขหมวดหมู่" : "เพิ่มหมวดหมู่" }}
               </h2>
               <VBtn
@@ -390,6 +398,7 @@ async function removeCategory(id: string) {
                 variant="text"
                 color="secondary"
                 size="small"
+                class="text-none rounded-lg"
                 @click="resetCategoryForm"
                 >ยกเลิก</VBtn
               >
@@ -398,7 +407,8 @@ async function removeCategory(id: string) {
               ><VTextField
                 v-model="categoryForm.name"
                 label="ชื่อหมวดหมู่"
-                class="mb-2"
+                class="mb-3"
+                rounded="lg"
               /><VSelect
                 v-model="categoryForm.transactionType"
                 label="ประเภท"
@@ -415,18 +425,21 @@ async function removeCategory(id: string) {
                     : undefined
                 "
                 persistent-hint
-                class="mb-2"
+                class="mb-3"
+                rounded="lg"
               /><VSelect
                 v-model="categoryForm.icon"
                 label="ไอคอน"
                 :items="categoryIconItems"
-                class="mb-2"
+                class="mb-3"
+                rounded="lg"
               /><VTextField
                 v-model="categoryForm.color"
                 label="สี"
                 type="color"
-                class="mb-3"
-              /><VBtn type="submit" color="primary" :loading="pending" block>{{
+                class="mb-4"
+                rounded="lg"
+              /><VBtn type="submit" color="primary" class="text-none font-weight-medium rounded-lg" :loading="pending" block>{{
                 editingCategoryId ? "บันทึกการแก้ไข" : "เพิ่มหมวดหมู่"
               }}</VBtn></VForm
             ></VCard
@@ -449,7 +462,7 @@ async function removeCategory(id: string) {
 }
 
 .category-card--editing {
-  border-color: rgb(var(--v-theme-primary));
-  box-shadow: 0 0 0 1px rgb(var(--v-theme-primary));
+  border-color: rgb(var(--v-theme-primary)) !important;
+  box-shadow: 0 0 0 1px rgb(var(--v-theme-primary)) !important;
 }
 </style>

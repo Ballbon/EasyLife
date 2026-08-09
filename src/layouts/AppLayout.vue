@@ -30,18 +30,27 @@ function togglePin() {
   window.localStorage.setItem("sidebar_pinned", String(isPinned.value));
 }
 
-const navItems = [
+const mainNavItems = [
   { title: "ภาพรวม", icon: "mdi-view-dashboard-outline", to: "/dashboard" },
+  { title: "รายการ", icon: "mdi-swap-horizontal", to: "/transactions" },
   { title: "แผนการเงิน", icon: "mdi-chart-donut", to: "/plans" },
+];
+
+const insightNavItems = [
+  { title: "รายงาน", icon: "mdi-chart-box-outline", to: "/reports" },
+  { title: "หมวดหมู่", icon: "mdi-shape-outline", to: "/settings/categories" },
+];
+
+const toolNavItems = [
   {
     title: "Daily Quest",
     icon: "mdi-checkbox-marked-circle-outline",
     to: "/quests",
   },
-  { title: "รายงาน", icon: "mdi-chart-box-outline", to: "/reports" },
-  { title: "รายการ", icon: "mdi-swap-horizontal", to: "/transactions" },
+];
+
+const accountNavItems = [
   { title: "บัญชี", icon: "mdi-wallet-outline", to: "/settings/accounts" },
-  { title: "หมวดหมู่", icon: "mdi-shape-outline", to: "/settings/categories" },
 ];
 
 const showFab = computed(
@@ -103,6 +112,7 @@ async function logout() {
     :expand-on-hover="!isPinned && mdAndUp"
     rail-width="68"
     width="260"
+    class="app-sidebar"
     @mouseenter="isHovering = true"
     @mouseleave="isHovering = false"
   >
@@ -112,10 +122,10 @@ async function logout() {
       style="min-height: 64px;"
     >
       <div class="d-flex align-center ga-3 overflow-hidden">
-        <VAvatar color="primary" rounded="lg" size="38" class="flex-shrink-0">
-          <VIcon icon="mdi-sprout" color="white" />
+        <VAvatar color="primary" rounded="lg" size="36" class="flex-shrink-0">
+          <VIcon icon="mdi-wallet" color="white" size="20" />
         </VAvatar>
-        <span v-if="isExpanded" class="text-h6 font-weight-bold text-no-wrap">EasyLife</span>
+        <span v-if="isExpanded" class="text-h6 font-weight-bold text-no-wrap tracking-tight">EasyLife</span>
       </div>
       <VBtn
         v-if="mdAndUp && isExpanded"
@@ -129,24 +139,64 @@ async function logout() {
       >
         <VIcon
           :icon="isPinned ? 'mdi-record-circle-outline' : 'mdi-circle-outline'"
-          size="22"
+          size="20"
         />
       </VBtn>
     </div>
-    <VDivider />
-    <VList :class="isExpanded ? 'px-3 py-4' : 'px-2 py-4'" nav>
-      <VListSubheader v-if="isExpanded">เมนูหลัก</VListSubheader>
+    <VDivider class="border-opacity-50" />
+
+    <VList :class="isExpanded ? 'px-3 py-3' : 'px-2 py-3'" nav>
+      <VListSubheader v-if="isExpanded" class="text-caption font-weight-bold text-uppercase tracking-wider text-disabled px-2 mb-1">หลัก</VListSubheader>
       <VListItem
-        v-for="item in navItems"
+        v-for="item in mainNavItems"
         :key="item.to"
         :to="item.to"
         :prepend-icon="item.icon"
         :title="item.title"
         color="primary"
         rounded="lg"
+        class="mb-1"
+      />
+
+      <VListSubheader v-if="isExpanded" class="text-caption font-weight-bold text-uppercase tracking-wider text-disabled px-2 mt-4 mb-1">วิเคราะห์</VListSubheader>
+      <VListItem
+        v-for="item in insightNavItems"
+        :key="item.to"
+        :to="item.to"
+        :prepend-icon="item.icon"
+        :title="item.title"
+        color="primary"
+        rounded="lg"
+        class="mb-1"
+      />
+
+      <VListSubheader v-if="isExpanded" class="text-caption font-weight-bold text-uppercase tracking-wider text-disabled px-2 mt-4 mb-1">เครื่องมือ</VListSubheader>
+      <VListItem
+        v-for="item in toolNavItems"
+        :key="item.to"
+        :to="item.to"
+        :prepend-icon="item.icon"
+        :title="item.title"
+        color="primary"
+        rounded="lg"
+        class="mb-1"
+      />
+
+      <VListSubheader v-if="isExpanded" class="text-caption font-weight-bold text-uppercase tracking-wider text-disabled px-2 mt-4 mb-1">บัญชี</VListSubheader>
+      <VListItem
+        v-for="item in accountNavItems"
+        :key="item.to"
+        :to="item.to"
+        :prepend-icon="item.icon"
+        :title="item.title"
+        color="primary"
+        rounded="lg"
+        class="mb-1"
       />
     </VList>
+
     <template #append>
+      <VDivider class="border-opacity-50" />
       <div :class="isExpanded ? 'pa-3 text-center' : 'py-3 text-center'">
         <VBtn
           v-if="isExpanded"
@@ -154,6 +204,7 @@ async function logout() {
           variant="text"
           prepend-icon="mdi-logout"
           color="secondary"
+          class="justify-start text-none rounded-lg"
           @click="logout"
         >
           ออกจากระบบ
@@ -171,7 +222,7 @@ async function logout() {
     </template>
   </VNavigationDrawer>
 
-  <VAppBar flat border height="68">
+  <VAppBar flat border height="64" class="app-topbar">
     <VAppBarNavIcon v-if="!mdAndUp" aria-label="เปิดเมนู" @click="drawer = !drawer" />
     <VBtn
       v-if="showBackButton"
@@ -182,7 +233,7 @@ async function logout() {
       class="ml-1 mr-1"
       @click="goBack('/dashboard')"
     />
-    <VAppBarTitle class="font-weight-semibold">{{
+    <VAppBarTitle class="font-weight-bold text-h6 text-high-emphasis">{{
       route.meta.title
     }}</VAppBarTitle>
     <template #append>
@@ -203,27 +254,28 @@ async function logout() {
                 ? 'mdi-weather-sunny'
                 : 'mdi-desktop-tower-monitor'
           "
+          size="20"
         />
       </VBtn>
       <VBtn
         color="primary"
-        variant="tonal"
+        variant="flat"
         size="small"
-        prepend-icon="mdi-flash"
-        class="mr-2 d-none d-sm-flex font-weight-medium text-none"
+        prepend-icon="mdi-plus"
+        class="mr-2 d-none d-sm-flex font-weight-medium text-none rounded-lg px-4"
         aria-label="บันทึกด่วน (Alt+N)"
         title="บันทึกด่วน (Alt+N)"
         @click="showQuickAdd = true"
       >
         บันทึกด่วน
       </VBtn>
-      <VAvatar color="primary" size="36" class="ml-2">
-        <VIcon icon="mdi-account-outline" size="20" />
+      <VAvatar color="primary" variant="tonal" size="36" class="ml-2">
+        <VIcon icon="mdi-account" size="20" color="primary" />
       </VAvatar>
     </template>
   </VAppBar>
 
-  <VMain>
+  <VMain class="app-main">
     <VContainer class="app-container py-6 py-md-8">
       <RouterView />
     </VContainer>
@@ -235,7 +287,7 @@ async function logout() {
       icon="mdi-plus"
       size="large"
       color="primary"
-      class="fab mb-4 mr-4"
+      class="fab mb-6 mr-6 rounded-circle"
       aria-label="บันทึกด่วน"
       title="บันทึกด่วน (Alt+N)"
       @click="showQuickAdd = true"
@@ -248,11 +300,22 @@ async function logout() {
 
 <style scoped>
 .app-container {
-  max-width: 1440px;
+  max-width: 1400px;
+}
+.app-sidebar {
+  border-right: 1px solid rgba(var(--v-border-color), var(--v-border-opacity)) !important;
+}
+.app-topbar {
+  background-color: rgb(var(--v-theme-surface)) !important;
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity)) !important;
+}
+.app-main {
+  background-color: rgb(var(--v-theme-background));
+  min-height: 100vh;
 }
 .fab {
   z-index: 10;
-  box-shadow: 0 6px 16px rgba(145, 85, 253, 0.45);
+  box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4) !important;
 }
 .banner-offline {
   z-index: 2000;

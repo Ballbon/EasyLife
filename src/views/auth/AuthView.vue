@@ -164,26 +164,27 @@ async function submit() {
         class="auth-hero d-none d-md-flex flex-column justify-center pa-10"
       >
         <div class="d-flex align-center ga-3 mb-10">
-          <VAvatar color="primary" rounded="lg" size="46"
-            ><VIcon icon="mdi-sprout"
-          /></VAvatar>
-          <span class="text-h5 font-weight-bold">EasyLife</span>
+          <VAvatar color="primary" rounded="lg" size="44">
+            <VIcon icon="mdi-wallet" color="white" size="24" />
+          </VAvatar>
+          <span class="text-h5 font-weight-bold text-high-emphasis tracking-tight">EasyLife</span>
         </div>
-        <h1 class="text-h3 font-weight-bold mb-4">
-          ชีวิตการเงินที่เบาขึ้น<br /><span class="text-primary"
-            >เริ่มต้นได้วันนี้</span
+        <h1 class="text-h3 font-weight-bold mb-4 line-height-tight">
+          ชีวิตการเงินที่เบาลง<br /><span class="text-primary"
+            >เริ่มต้นได้อย่างมั่นใจ</span
           >
         </h1>
-        <p class="text-h6 text-medium-emphasis">
-          เห็นภาพรวมรายรับ รายจ่าย และทุกบัญชีในที่เดียว
+        <p class="text-subtitle-1 text-medium-emphasis">
+          เห็นภาพรวมรายรับ รายจ่าย และบริหารจัดการทุกบัญชีได้อย่างสมบูรณ์แบบ
         </p>
       </section>
 
-      <VCard class="materio-card pa-6 pa-sm-9" max-width="480" width="100%">
-        <div class="d-flex d-md-none align-center ga-2 mb-7">
-          <VAvatar color="primary" rounded="lg"
-            ><VIcon icon="mdi-sprout" /></VAvatar
-          ><span class="text-h6 font-weight-bold">EasyLife</span>
+      <VCard class="materio-card pa-8 pa-sm-10 rounded-xl" max-width="460" width="100%">
+        <div class="d-flex d-md-none align-center ga-3 mb-6">
+          <VAvatar color="primary" rounded="lg" size="38">
+            <VIcon icon="mdi-wallet" color="white" size="20" />
+          </VAvatar>
+          <span class="text-h6 font-weight-bold tracking-tight">EasyLife</span>
         </div>
         <div v-if="mode !== 'login'" class="mb-4">
           <VBtn
@@ -191,26 +192,26 @@ async function submit() {
             variant="text"
             size="small"
             color="secondary"
-            class="px-0"
+            class="px-0 text-none rounded-lg"
             @click="goBack('/login')"
           >
             ย้อนกลับไปหน้าเข้าสู่ระบบ
           </VBtn>
         </div>
-        <h2 class="text-h4 font-weight-semibold">{{ copy.title }}</h2>
-        <p class="mt-2 mb-7 text-medium-emphasis">{{ copy.description }}</p>
+        <h2 class="text-h5 font-weight-bold">{{ copy.title }}</h2>
+        <p class="mt-1 mb-6 text-body-2 text-medium-emphasis">{{ copy.description }}</p>
         <VAlert
           v-if="route.query.reset === 'success' && mode === 'login'"
           type="success"
           variant="tonal"
-          class="mb-5"
+          class="mb-5 rounded-lg"
           >ตั้งรหัสผ่านใหม่สำเร็จแล้ว กรุณาเข้าสู่ระบบ</VAlert
         >
         <VAlert
           v-if="message"
           :type="success ? 'success' : 'error'"
           variant="tonal"
-          class="mb-5"
+          class="mb-5 rounded-lg"
           >{{ message }}</VAlert
         >
         <VForm @submit.prevent="submit">
@@ -220,7 +221,8 @@ async function submit() {
             label="ชื่อที่ใช้ในแอป"
             autocomplete="name"
             :error-messages="errors.displayName"
-            class="mb-2"
+            class="mb-3"
+            rounded="lg"
           />
           <VTextField
             v-if="mode !== 'reset'"
@@ -230,7 +232,8 @@ async function submit() {
             autocomplete="email"
             prepend-inner-icon="mdi-email-outline"
             :error-messages="errors.email"
-            class="mb-2"
+            class="mb-3"
+            rounded="lg"
           />
           <VTextField
             v-if="mode === 'login' || mode === 'register' || mode === 'reset'"
@@ -242,7 +245,8 @@ async function submit() {
               showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'
             "
             :error-messages="errors.password"
-            class="mb-2"
+            class="mb-3"
+            rounded="lg"
             @click:append-inner="showPassword = !showPassword"
           />
           <VTextField
@@ -252,10 +256,11 @@ async function submit() {
             :type="showPassword ? 'text' : 'password'"
             prepend-inner-icon="mdi-lock-check-outline"
             :error-messages="errors.confirmPassword"
-            class="mb-2"
+            class="mb-3"
+            rounded="lg"
           />
           <div v-if="mode === 'login'" class="mb-5 text-right">
-            <RouterLink to="/forgot-password" class="text-primary text-body-2"
+            <RouterLink to="/forgot-password" class="text-primary text-caption font-weight-medium"
               >ลืมรหัสผ่าน?</RouterLink
             >
           </div>
@@ -264,30 +269,31 @@ async function submit() {
             color="primary"
             block
             size="large"
+            class="text-none font-weight-medium rounded-lg"
             :loading="pending"
             >{{ copy.action }}</VBtn
           >
         </VForm>
         <p
           v-if="mode === 'login'"
-          class="mt-6 text-center text-body-2 text-medium-emphasis"
+          class="mt-6 text-center text-body-2 text-medium-emphasis mb-0"
         >
           ยังไม่มีบัญชี?
-          <RouterLink to="/register" class="text-primary font-weight-medium"
+          <RouterLink to="/register" class="text-primary font-weight-semibold ml-1"
             >สมัครสมาชิก</RouterLink
           >
         </p>
         <p
           v-else-if="mode === 'register'"
-          class="mt-6 text-center text-body-2 text-medium-emphasis"
+          class="mt-6 text-center text-body-2 text-medium-emphasis mb-0"
         >
           มีบัญชีแล้ว?
-          <RouterLink to="/login" class="text-primary font-weight-medium"
+          <RouterLink to="/login" class="text-primary font-weight-semibold ml-1"
             >เข้าสู่ระบบ</RouterLink
           >
         </p>
-        <p v-else-if="mode === 'forgot'" class="mt-6 text-center">
-          <RouterLink to="/login" class="text-primary text-body-2"
+        <p v-else-if="mode === 'forgot'" class="mt-6 text-center mb-0">
+          <RouterLink to="/login" class="text-primary text-body-2 font-weight-medium"
             >กลับไปหน้าเข้าสู่ระบบ</RouterLink
           >
         </p>
@@ -303,12 +309,15 @@ async function submit() {
 .auth-grid {
   display: grid;
   max-width: 1100px;
-  grid-template-columns: minmax(0, 1fr) 480px;
+  grid-template-columns: minmax(0, 1fr) 460px;
   gap: 64px;
   align-items: center;
 }
 .auth-hero {
-  min-height: 560px;
+  min-height: 520px;
+}
+.line-height-tight {
+  line-height: 1.2;
 }
 @media (max-width: 959px) {
   .auth-grid {

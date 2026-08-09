@@ -19,35 +19,31 @@ describe("useThemeMode", () => {
     store = {};
     mockThemeName.value = "materioLight";
 
-    Object.defineProperty(window, "localStorage", {
-      writable: true,
-      value: {
-        getItem: (key: string) => store[key] || null,
-        setItem: (key: string, value: string) => {
-          store[key] = value;
-        },
-        removeItem: (key: string) => {
-          delete store[key];
-        },
-        clear: () => {
-          store = {};
-        },
-      },
-    });
+    const localWindow = globalThis as unknown as Record<string, unknown>;
 
-    Object.defineProperty(window, "matchMedia", {
-      writable: true,
-      value: vi.fn().mockImplementation((query) => ({
-        matches: false,
-        media: query,
-        onchange: null,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-      })),
-    });
+    localWindow.localStorage = {
+      getItem: (key: string) => store[key] || null,
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+      },
+      clear: () => {
+        store = {};
+      },
+    };
+
+    localWindow.matchMedia = vi.fn().mockImplementation((query) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
   });
 
   it("defaults to system mode", () => {
@@ -61,11 +57,11 @@ describe("useThemeMode", () => {
 
     toggleMode();
     expect(mode.value).toBe("light");
-    expect(localStorage.getItem("easylife_theme_mode")).toBe("light");
+    expect((globalThis as unknown as { localStorage: Storage }).localStorage.getItem("easylife_theme_mode")).toBe("light");
 
     toggleMode();
     expect(mode.value).toBe("dark");
-    expect(localStorage.getItem("easylife_theme_mode")).toBe("dark");
+    expect((globalThis as unknown as { localStorage: Storage }).localStorage.getItem("easylife_theme_mode")).toBe("dark");
 
     toggleMode();
     expect(mode.value).toBe("system");

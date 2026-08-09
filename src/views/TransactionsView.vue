@@ -118,46 +118,52 @@ function resetFilters() {
 
 <template>
   <PageState :loading="loading" :error="error" skeleton-type="list" @retry="loadData">
-    <div v-if="data">
-      <div class="d-flex flex-wrap align-end justify-space-between ga-4 mb-6">
+    <div v-if="data" class="transactions-page">
+      <div class="d-flex flex-wrap align-center justify-space-between ga-4 mb-6">
         <div>
-          <p class="text-body-2 text-medium-emphasis">การเงินของคุณ</p>
-          <h1 class="page-title mt-1 mb-0">รายการทั้งหมด</h1>
+          <p class="text-caption font-weight-medium text-disabled mb-1">การเงินของคุณ</p>
+          <h1 class="page-title mb-0">รายการทั้งหมด</h1>
         </div>
-        <div class="d-flex ga-2">
+        <div class="d-flex ga-3">
           <VBtn
             variant="outlined"
             color="secondary"
             prepend-icon="mdi-download-outline"
+            class="text-none font-weight-medium border-opacity-75 rounded-lg"
             @click="handleExportCsv"
           >
             ส่งออก CSV
           </VBtn>
-          <VBtn to="/transactions/new" color="primary" prepend-icon="mdi-plus">
+          <VBtn to="/transactions/new" color="primary" prepend-icon="mdi-plus" class="text-none font-weight-medium rounded-lg px-4">
             เพิ่มรายการ
           </VBtn>
         </div>
       </div>
 
-      <VCard class="materio-card pa-4 pa-md-5 mb-6">
-        <VRow dense>
-          <VCol cols="12" md="4"
-            ><VTextField
+      <!-- FILTER BAR -->
+      <VCard class="materio-card pa-5 rounded-xl mb-6">
+        <VRow dense class="ga-y-3">
+          <VCol cols="12" md="4">
+            <VTextField
               v-model="filters.q"
-              label="ค้นหาโน้ต บัญชี หมวดหมู่"
+              placeholder="ค้นหาโน้ต บัญชี หมวดหมู่..."
               prepend-inner-icon="mdi-magnify"
               clearable
               hide-details
-          /></VCol>
-          <VCol cols="6" md="2"
-            ><VSelect
+              rounded="lg"
+            />
+          </VCol>
+          <VCol cols="6" md="2">
+            <VSelect
               v-model="filters.type"
               label="ประเภท"
               :items="typeItems"
               hide-details
-          /></VCol>
-          <VCol cols="6" md="2"
-            ><VSelect
+              rounded="lg"
+            />
+          </VCol>
+          <VCol cols="6" md="2">
+            <VSelect
               v-model="filters.account"
               label="บัญชี"
               :items="[
@@ -165,9 +171,11 @@ function resetFilters() {
                 ...data.accounts.map((a) => ({ title: a.name, value: a.id })),
               ]"
               hide-details
-          /></VCol>
-          <VCol cols="6" md="2"
-            ><VSelect
+              rounded="lg"
+            />
+          </VCol>
+          <VCol cols="6" md="2">
+            <VSelect
               v-model="filters.category"
               label="หมวดหมู่"
               :items="[
@@ -175,43 +183,52 @@ function resetFilters() {
                 ...data.categories.map((c) => ({ title: c.name, value: c.id })),
               ]"
               hide-details
-          /></VCol>
-          <VCol cols="6" md="2" class="d-flex align-center"
-            ><VBtn
+              rounded="lg"
+            />
+          </VCol>
+          <VCol cols="6" md="2" class="d-flex align-center">
+            <VBtn
               block
               variant="text"
               color="secondary"
               prepend-icon="mdi-filter-off-outline"
+              class="text-none rounded-lg"
               @click="resetFilters"
-              >ล้างตัวกรอง</VBtn
-            ></VCol
-          >
-          <VCol cols="6" md="2"
-            ><VTextField
+            >
+              ล้างตัวกรอง
+            </VBtn>
+          </VCol>
+          <VCol cols="6" md="2">
+            <VTextField
               v-model="filters.from"
               label="ตั้งแต่วันที่"
               type="date"
               hide-details
-          /></VCol>
-          <VCol cols="6" md="2"
-            ><VTextField
+              rounded="lg"
+            />
+          </VCol>
+          <VCol cols="6" md="2">
+            <VTextField
               v-model="filters.to"
               label="ถึงวันที่"
               type="date"
               hide-details
-          /></VCol>
+              rounded="lg"
+            />
+          </VCol>
         </VRow>
       </VCard>
 
-      <VCard class="materio-card">
+      <!-- TRANSACTIONS LIST CONTAINER -->
+      <VCard class="materio-card rounded-xl">
         <VList v-if="transactions.length" lines="two" class="py-2">
           <template v-for="(item, index) in transactions" :key="item.id">
             <VListItem
               :to="`/transactions/${item.id}/edit`"
-              class="px-4 px-md-6 py-3"
+              class="px-6 py-3"
             >
-              <template #prepend
-                ><VAvatar
+              <template #prepend>
+                <VAvatar
                   :color="
                     item.transaction_type === 'expense'
                       ? 'error'
@@ -220,40 +237,47 @@ function resetFilters() {
                         : 'info'
                   "
                   variant="tonal"
-                  ><VIcon
+                  size="40"
+                  rounded="lg"
+                  class="mr-3"
+                >
+                  <VIcon
                     :icon="
                       item.transaction_type === 'expense'
                         ? 'mdi-arrow-up-right'
                         : item.transaction_type === 'income'
                           ? 'mdi-arrow-down-left'
                           : 'mdi-swap-horizontal'
-                    " /></VAvatar
-              ></template>
-              <VListItemTitle class="font-weight-medium">{{
+                    "
+                    size="20"
+                  />
+                </VAvatar>
+              </template>
+              <VListItemTitle class="font-weight-semibold text-body-2">{{
                 title(item)
               }}</VListItemTitle>
-              <VListItemSubtitle
-                >{{ item.note || accountNames.get(item.account_id) }} ·
-                {{ formatBangkokDateTime(item.occurred_at) }}</VListItemSubtitle
-              >
-              <template #append
-                ><span
-                  class="font-weight-semibold"
+              <VListItemSubtitle class="text-caption text-medium-emphasis mt-1">
+                {{ item.note || accountNames.get(item.account_id) }} · {{ formatBangkokDateTime(item.occurred_at) }}
+              </VListItemSubtitle>
+              <template #append>
+                <span
+                  class="font-weight-bold text-body-2 ml-2"
                   :class="{
                     'amount-expense': item.transaction_type === 'expense',
                     'amount-income': item.transaction_type === 'income',
                   }"
-                  >{{
+                >
+                  {{
                     item.transaction_type === "expense"
                       ? "−"
                       : item.transaction_type === "income"
                         ? "+"
                         : ""
-                  }}{{ formatSatang(Number(item.amount_satang)) }}</span
-                ></template
-              >
+                  }}{{ formatSatang(Number(item.amount_satang)) }}
+                </span>
+              </template>
             </VListItem>
-            <VDivider v-if="index < transactions.length - 1" inset />
+            <VDivider v-if="index < transactions.length - 1" class="border-opacity-40 ml-16" />
           </template>
         </VList>
 

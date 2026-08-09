@@ -1,5 +1,3 @@
-import { fileURLToPath, URL } from "node:url";
-
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import vuetify from "vite-plugin-vuetify";
@@ -18,7 +16,7 @@ export default defineConfig(({ mode }) => {
           name: "EasyLife - การเงิน & Daily Quest",
           short_name: "EasyLife",
           description: "แอปพลิเคชันบันทึกการเงินส่วนบุคคลและภารกิจประจำวัน",
-          theme_color: "#9155FD",
+          theme_color: "#7C3AED",
           background_color: "#FAFAFA",
           display: "standalone",
           orientation: "portrait",
@@ -38,7 +36,7 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     resolve: {
-      alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+      alias: { "@": new URL("./src", import.meta.url).pathname },
     },
     define: {
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(
