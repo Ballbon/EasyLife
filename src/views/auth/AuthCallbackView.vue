@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 
 import { supabase } from "@/lib/supabase";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const error = ref("");
@@ -15,7 +17,7 @@ onMounted(async () => {
       : new window.URLSearchParams(window.location.search).get("code");
   if (code) {
     const result = await supabase.auth.exchangeCodeForSession(code);
-    if (result.error) error.value = "ลิงก์ไม่ถูกต้องหรือหมดอายุ";
+    if (result.error) error.value = t("auth.callback.invalidLink");
   }
   if (error.value) return;
   const next =
@@ -34,11 +36,11 @@ onMounted(async () => {
       <template v-if="error">
         <VIcon icon="mdi-alert-circle-outline" color="error" size="48" />
         <p class="mt-4">{{ error }}</p>
-        <VBtn to="/login" color="primary" class="mt-6">กลับไปเข้าสู่ระบบ</VBtn>
+        <VBtn to="/login" color="primary" class="mt-6">{{ $t('auth.backToLogin') }}</VBtn>
       </template>
       <template v-else>
         <VProgressCircular indeterminate color="primary" size="48" />
-        <p class="mt-4">กำลังยืนยันบัญชี...</p>
+        <p class="mt-4">{{ $t('auth.callback.verifying') }}</p>
       </template>
     </VCard>
   </main>

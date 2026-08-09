@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 
 import AllocationOverview from "@/components/AllocationOverview.vue";
 import CategoryBreakdown from "@/components/CategoryBreakdown.vue";
@@ -21,6 +22,7 @@ import {
 } from "@/lib/transactions";
 import type { Transaction } from "@/types/finance";
 
+const { t, locale } = useI18n();
 const loading = ref(true);
 const error = ref("");
 const data = ref<FinanceData>();
@@ -32,7 +34,7 @@ async function loadData() {
   try {
     data.value = await loadFinanceData();
   } catch {
-    error.value = "โหลดภาพรวมการเงินไม่สำเร็จ กรุณาลองใหม่";
+    error.value = t("components.pageState.error");
   } finally {
     loading.value = false;
   }
@@ -79,18 +81,22 @@ const accountNames = computed(
 const categoryNames = computed(
   () => new Map(data.value?.categories.map((item) => [item.id, item.name])),
 );
-const dateLabel = new Intl.DateTimeFormat("th-TH", {
-  timeZone: "Asia/Bangkok",
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-}).format(new Date());
+
+const dateLabel = computed(() =>
+  new Intl.DateTimeFormat(locale.value === "th" ? "th-TH" : "en-US", {
+    timeZone: "Asia/Bangkok",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date()),
+);
 
 function transactionTitle(item: Transaction) {
   const type = item.transaction_type as TransactionType;
+  const accFallback = t("dashboard.accountFallback");
   return type === "transfer"
-    ? `${accountNames.value.get(item.account_id) ?? "บัญชี"} → ${accountNames.value.get(item.destination_account_id ?? "") ?? "บัญชี"}`
+    ? `${accountNames.value.get(item.account_id) ?? accFallback} → ${accountNames.value.get(item.destination_account_id ?? "") ?? accFallback}`
     : (categoryNames.value.get(item.category_id ?? "") ??
         transactionTypeLabels[type]);
 }
@@ -105,16 +111,15 @@ function typeIcon(type: string) {
 <template>
   <PageState :loading="loading" :error="error" skeleton-type="dashboard" @retry="loadData">
     <div v-if="data" class="dashboard-page">
-      <header
-        class="d-flex flex-wrap align-end justify-space-between ga-4 mb-6"
-      >
+      <!-- HEADER -->
+      <header class="d-flex flex-wrap align-center justify-space-between ga-4 mb-6">
         <div>
-          <p class="text-body-2 text-medium-emphasis">{{ dateLabel }}</p>
-          <h1 class="page-title mt-1 mb-0">
-            สวัสดี {{ data.profile.display_name ?? "ผู้ใช้ EasyLife" }}
+          <p class="text-caption font-weight-medium text-disabled mb-1">{{ dateLabel }}</p>
+          <h1 class="page-title mb-0">
+            {{ $t('dashboard.greeting', { name: data.profile.display_name ?? $t('dashboard.defaultUser') }) }}
           </h1>
-          <p class="mt-1 text-body-2 text-medium-emphasis">
-            ภาพรวมที่ควรรู้ก่อนเริ่มใช้เงินวันนี้
+          <p class="text-body-2 text-medium-emphasis mt-1 mb-0">
+            {{ $t('dashboard.subtitle') }}
           </p>
         </div>
         <VBtn
@@ -122,117 +127,133 @@ function typeIcon(type: string) {
           variant="outlined"
           color="primary"
           prepend-icon="mdi-chart-box-outline"
+          class="text-none font-weight-medium border-opacity-75 rounded-lg"
         >
-          ดูรายงานย้อนหลัง
+          {{ $t('dashboard.viewPastReports') }}
         </VBtn>
       </header>
 
-      <VRow class="mb-2">
+      <!-- PRIMARY BALANCE & TODAY METRICS -->
+      <VRow class="mb-4">
         <VCol cols="12" lg="7">
-          <VCard class="balance-card h-100 pa-6 pa-md-7">
-            <div class="balance-orbit" aria-hidden="true"></div>
-            <div class="position-relative">
-              <div class="d-flex align-center ga-2 text-body-2 balance-label">
-                <VIcon icon="mdi-wallet-outline" size="18" />
-                เงินคงเหลือทุกบัญชี
+          <VCard class="balance-card h-100 pa-6 pa-md-7 rounded-xl">
+            <div class="position-relative z-1">
+              <div class="d-flex align-center justify-space-between mb-4">
+                <span class="d-flex align-center ga-2 text-body-2 font-weight-medium text-white-70">
+                  <VIcon icon="mdi-wallet-outline" size="18" />
+                  {{ $t('dashboard.netBalance') }}
+                </span>
+                <span class="badge-period px-3 py-1 text-caption font-weight-medium rounded-pill">
+                  {{ formatReportMonth(month) }}
+                </span>
               </div>
-              <p class="balance-value mt-3">{{ formatSatang(totalBalance) }}</p>
-              <p class="text-body-2 mt-2 balance-caption">
-                กระแสเงินสด {{ formatReportMonth(month) }}
-                <strong
-                  :class="report.net >= 0 ? 'amount-income' : 'amount-expense'"
+              <div class="balance-value my-2">{{ formatSatang(totalBalance) }}</div>
+              <div class="d-flex align-center ga-2 text-body-2 text-white-80 mt-4">
+                <span>{{ $t('dashboard.monthlyNetCashflow') }}</span>
+                <span
+                  class="font-weight-bold"
+                  :class="report.net >= 0 ? 'text-emerald-300' : 'text-rose-300'"
                 >
                   {{ report.net >= 0 ? "+" : "" }}{{ formatSatang(report.net) }}
-                </strong>
-              </p>
+                </span>
+              </div>
             </div>
           </VCard>
         </VCol>
         <VCol cols="12" lg="5">
-          <VCard class="materio-card h-100 pa-5 pa-md-6">
-            <div class="d-flex align-center justify-space-between mb-5">
+          <VCard class="materio-card h-100 pa-6 rounded-xl">
+            <div class="d-flex align-center justify-space-between mb-4">
               <div>
-                <p class="text-overline text-primary">วันนี้</p>
-                <h2 class="text-h6 font-weight-semibold">เงินเข้าและออก</h2>
+                <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">{{ $t('dashboard.today') }}</p>
+                <h2 class="text-subtitle-1 font-weight-bold mb-0">{{ $t('dashboard.inAndOut') }}</h2>
               </div>
-              <VAvatar color="primary" variant="tonal" rounded="lg">
-                <VIcon icon="mdi-calendar-today-outline" />
+              <VAvatar color="primary" variant="tonal" rounded="lg" size="40">
+                <VIcon icon="mdi-calendar-today-outline" size="20" />
               </VAvatar>
             </div>
-            <div class="today-grid">
+            <div class="today-grid py-2">
               <div>
-                <p class="text-caption text-medium-emphasis">รายรับ</p>
-                <p class="text-h6 font-weight-semibold amount-income mt-1">
+                <p class="text-caption text-medium-emphasis mb-1">{{ $t('dashboard.todayIncome') }}</p>
+                <p class="text-h6 font-weight-bold amount-income mb-0">
                   {{ formatSatang(today.income) }}
                 </p>
               </div>
               <div>
-                <p class="text-caption text-medium-emphasis">รายจ่าย</p>
-                <p class="text-h6 font-weight-semibold amount-expense mt-1">
+                <p class="text-caption text-medium-emphasis mb-1">{{ $t('dashboard.todayExpense') }}</p>
+                <p class="text-h6 font-weight-bold amount-expense mb-0">
                   {{ formatSatang(today.expense) }}
                 </p>
               </div>
             </div>
-            <p class="text-caption text-medium-emphasis mt-5">
+            <p class="text-caption text-medium-emphasis mt-4 mb-0">
               {{
                 today.transactionCount
-                  ? `${today.transactionCount} รายการที่กระทบกระแสเงินสด`
-                  : "วันนี้ยังไม่มีรายการรับหรือจ่าย"
+                  ? $t('dashboard.todayCountText', { count: today.transactionCount })
+                  : $t('dashboard.todayNoTransactions')
               }}
             </p>
           </VCard>
         </VCol>
       </VRow>
 
-      <VRow class="mb-2">
+      <!-- KPI METRIC CARDS -->
+      <VRow class="mb-4">
         <VCol cols="12" sm="4">
-          <VCard class="metric-card materio-card h-100 pa-5">
-            <p class="text-body-2 text-medium-emphasis">รายรับเดือนนี้</p>
-            <p class="text-h5 font-weight-semibold mt-2">
+          <VCard class="materio-card h-100 pa-5 rounded-xl">
+            <div class="d-flex align-center justify-space-between">
+              <span class="text-body-2 text-medium-emphasis">{{ $t('dashboard.incomeThisMonth') }}</span>
+              <VAvatar color="success" variant="tonal" size="32" rounded="md">
+                <VIcon icon="mdi-trending-up" size="18" color="success" />
+              </VAvatar>
+            </div>
+            <p class="text-h5 font-weight-bold mt-3 mb-0">
               {{ formatSatang(report.income) }}
             </p>
-            <VIcon class="metric-icon income" icon="mdi-trending-up" />
           </VCard>
         </VCol>
         <VCol cols="12" sm="4">
-          <VCard class="metric-card materio-card h-100 pa-5">
-            <p class="text-body-2 text-medium-emphasis">รายจ่ายเดือนนี้</p>
-            <p class="text-h5 font-weight-semibold mt-2">
+          <VCard class="materio-card h-100 pa-5 rounded-xl">
+            <div class="d-flex align-center justify-space-between">
+              <span class="text-body-2 text-medium-emphasis">{{ $t('dashboard.expenseThisMonth') }}</span>
+              <VAvatar color="error" variant="tonal" size="32" rounded="md">
+                <VIcon icon="mdi-trending-down" size="18" color="error" />
+              </VAvatar>
+            </div>
+            <p class="text-h5 font-weight-bold mt-3 mb-0">
               {{ formatSatang(report.expense) }}
             </p>
-            <VIcon class="metric-icon expense" icon="mdi-trending-down" />
           </VCard>
         </VCol>
         <VCol cols="12" sm="4">
-          <VCard class="metric-card materio-card h-100 pa-5">
-            <p class="text-body-2 text-medium-emphasis">หมวดที่ใช้มากสุด</p>
-            <p class="text-h6 font-weight-semibold mt-2 text-truncate">
-              {{ report.categories[0]?.name ?? "ยังไม่มีข้อมูล" }}
+          <VCard class="materio-card h-100 pa-5 rounded-xl">
+            <div class="d-flex align-center justify-space-between">
+              <span class="text-body-2 text-medium-emphasis">{{ $t('dashboard.topCategory') }}</span>
+              <VAvatar color="primary" variant="tonal" size="32" rounded="md">
+                <VIcon icon="mdi-shape-outline" size="18" color="primary" />
+              </VAvatar>
+            </div>
+            <p class="text-h6 font-weight-bold mt-3 mb-0 text-truncate">
+              {{ report.categories[0]?.name ?? $t('dashboard.noData') }}
             </p>
-            <p
-              v-if="report.categories[0]"
-              class="text-caption text-medium-emphasis mt-1"
-            >
+            <p v-if="report.categories[0]" class="text-caption text-medium-emphasis mt-1 mb-0">
               {{ formatSatang(report.categories[0].amount) }}
             </p>
-            <VIcon class="metric-icon category" icon="mdi-shape-outline" />
           </VCard>
         </VCol>
       </VRow>
 
-      <!-- PRE-SPENDING MONEY ALLOCATION (วางเงินก่อนใช้จริง) CARD -->
-      <AllocationOverview :overview="allocationOverview" :month="month" />
+      <!-- PRE-SPENDING MONEY ALLOCATION CARD -->
+      <AllocationOverview :overview="allocationOverview" :month="month" class="mb-6" />
 
-      <VRow class="mb-2">
+      <!-- CASHFLOW CHART & SPENDING BREAKDOWN -->
+      <VRow class="mb-4">
         <VCol cols="12" lg="8">
-          <VCard class="materio-card h-100 pa-5 pa-md-6">
-            <div
-              class="d-flex flex-wrap align-start justify-space-between ga-3 mb-1"
-            >
+          <VCard class="materio-card h-100 pa-6 rounded-xl">
+            <div class="d-flex flex-wrap align-start justify-space-between ga-3 mb-4">
               <div>
-                <p class="text-overline text-primary">จังหวะการใช้เงิน</p>
-                <h2 class="text-h6 font-weight-semibold">
-                  รายรับและรายจ่ายรายวัน
+                <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">{{ $t('dashboard.spendingPacing') }}</p>
+                <h2 class="text-subtitle-1 font-weight-bold mb-0">
+                  {{ $t('dashboard.dailyIncomeExpense') }}
                 </h2>
               </div>
               <VBtn
@@ -240,40 +261,42 @@ function typeIcon(type: string) {
                 variant="text"
                 color="primary"
                 append-icon="mdi-arrow-right"
+                class="text-none font-weight-medium px-2"
               >
-                รายละเอียด
+                {{ $t('dashboard.viewDetails') }}
               </VBtn>
             </div>
             <DailyCashflowChart :data="report.daily" />
           </VCard>
         </VCol>
         <VCol cols="12" lg="4">
-          <VCard class="materio-card h-100 pa-5 pa-md-6">
-            <p class="text-overline text-primary">รายจ่าย</p>
-            <h2 class="text-h6 font-weight-semibold mb-5">ใช้ไปกับอะไร</h2>
+          <VCard class="materio-card h-100 pa-6 rounded-xl">
+            <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">{{ $t('dashboard.spendingBreakdown') }}</p>
+            <h2 class="text-subtitle-1 font-weight-bold mb-4">{{ $t('dashboard.whereItWent') }}</h2>
             <CategoryBreakdown :categories="report.categories.slice(0, 5)" />
           </VCard>
         </VCol>
       </VRow>
 
+      <!-- RECENT TRANSACTIONS & ACCOUNT BALANCES -->
       <VRow>
         <VCol cols="12" lg="8">
-          <VCard class="materio-card h-100">
-            <VCardItem class="px-5 px-md-6 py-4">
-              <VCardTitle class="font-weight-semibold">รายการล่าสุด</VCardTitle>
+          <VCard class="materio-card h-100 rounded-xl">
+            <VCardItem class="px-6 py-4">
+              <VCardTitle class="text-subtitle-1 font-weight-bold">{{ $t('dashboard.recentTransactions') }}</VCardTitle>
               <template #append>
-                <VBtn to="/transactions" variant="text" color="primary"
-                  >ดูทั้งหมด</VBtn
+                <VBtn to="/transactions" variant="text" color="primary" class="text-none font-weight-medium"
+                  >{{ $t('dashboard.viewAll') }}</VBtn
                 >
               </template>
             </VCardItem>
-            <VDivider />
-            <VList v-if="data.transactions.length" lines="two" class="py-2">
+            <VDivider class="border-opacity-50" />
+            <VList v-if="data.transactions.length" lines="two" class="py-1">
               <VListItem
                 v-for="item in data.transactions.slice(0, 5)"
                 :key="item.id"
                 :to="`/transactions/${item.id}/edit`"
-                class="px-5 px-md-6"
+                class="px-6 py-3"
               >
                 <template #prepend>
                   <VAvatar
@@ -285,19 +308,22 @@ function typeIcon(type: string) {
                           : 'info'
                     "
                     variant="tonal"
+                    size="40"
+                    rounded="lg"
+                    class="mr-3"
                   >
-                    <VIcon :icon="typeIcon(item.transaction_type)" />
+                    <VIcon :icon="typeIcon(item.transaction_type)" size="20" />
                   </VAvatar>
                 </template>
-                <VListItemTitle class="font-weight-medium">{{
+                <VListItemTitle class="font-weight-semibold text-body-2">{{
                   transactionTitle(item)
                 }}</VListItemTitle>
-                <VListItemSubtitle>{{
+                <VListItemSubtitle class="text-caption text-medium-emphasis">{{
                   formatBangkokDateTime(item.occurred_at)
                 }}</VListItemSubtitle>
                 <template #append>
                   <span
-                    class="font-weight-semibold transaction-amount"
+                    class="font-weight-bold text-body-2 transaction-amount ml-2"
                     :class="{
                       'amount-expense': item.transaction_type === 'expense',
                       'amount-income': item.transaction_type === 'income',
@@ -315,34 +341,39 @@ function typeIcon(type: string) {
               </VListItem>
             </VList>
             <div v-else class="pa-10 text-center text-medium-emphasis">
-              <VIcon icon="mdi-receipt-text-outline" size="44" class="mb-3" />
-              <p>ยังไม่มีรายการ เริ่มบันทึกเพื่อเห็นภาพรวมของคุณ</p>
+              <VIcon icon="mdi-receipt-text-outline" size="44" class="mb-3 text-disabled" />
+              <p class="mb-2">{{ $t('dashboard.noTransactionsYet') }}</p>
               <VBtn
                 to="/transactions/new"
-                variant="text"
+                variant="flat"
                 color="primary"
-                class="mt-2"
-                >เพิ่มรายการแรก</VBtn
+                class="text-none font-weight-medium rounded-lg px-4"
+                >{{ $t('dashboard.addFirstTransaction') }}</VBtn
               >
             </div>
           </VCard>
         </VCol>
 
         <VCol cols="12" lg="4">
-          <VCard class="materio-card h-100">
-            <VCardItem class="px-5 px-md-6 py-4">
-              <VCardTitle class="font-weight-semibold">ยอดตามบัญชี</VCardTitle>
+          <VCard class="materio-card h-100 rounded-xl">
+            <VCardItem class="px-6 py-4">
+              <VCardTitle class="text-subtitle-1 font-weight-bold">{{ $t('dashboard.balanceByAccount') }}</VCardTitle>
             </VCardItem>
-            <VDivider />
-            <VList class="py-3">
+            <VDivider class="border-opacity-50" />
+            <VList class="py-2">
               <VListItem
                 v-for="account in data.accounts"
                 :key="account.id"
-                prepend-icon="mdi-wallet-outline"
-                :title="account.name"
+                class="px-6 py-3"
               >
+                <template #prepend>
+                  <VAvatar color="primary" variant="tonal" size="36" rounded="lg" class="mr-3">
+                    <VIcon icon="mdi-wallet-outline" size="18" color="primary" />
+                  </VAvatar>
+                </template>
+                <VListItemTitle class="font-weight-medium text-body-2">{{ account.name }}</VListItemTitle>
                 <template #append>
-                  <span class="font-weight-medium">
+                  <span class="font-weight-bold text-body-2 ml-2">
                     {{
                       formatSatang(
                         calculateAccountBalance(
@@ -368,34 +399,31 @@ function typeIcon(type: string) {
   position: relative;
   overflow: hidden;
   color: white;
-  background: linear-gradient(125deg, #5635a5 0%, #7c4dce 54%, #a36ff0 100%);
-  box-shadow: 0 14px 30px rgba(86, 53, 165, 0.25) !important;
-}
-.balance-orbit {
-  position: absolute;
-  right: -3rem;
-  top: -7rem;
-  width: 20rem;
-  height: 20rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  box-shadow:
-    inset 0 0 0 3rem rgba(255, 255, 255, 0.035),
-    inset 0 0 0 6rem rgba(255, 255, 255, 0.025);
-}
-.balance-label,
-.balance-caption {
-  color: rgba(255, 255, 255, 0.78);
-}
-.balance-caption strong {
-  color: white;
+  background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 50%, #8b5cf6 100%);
+  box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.3) !important;
 }
 .balance-value {
-  font:
-    700 clamp(2rem, 6vw, 3.1rem)/1.15 Inter,
-    "Noto Sans Thai",
-    sans-serif;
-  letter-spacing: -0.045em;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.text-white-70 {
+  color: rgba(255, 255, 255, 0.75);
+}
+.text-white-80 {
+  color: rgba(255, 255, 255, 0.85);
+}
+.text-emerald-300 {
+  color: #6ee7b7;
+}
+.text-rose-300 {
+  color: #fca5a5;
+}
+.badge-period {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  color: white;
 }
 .today-grid {
   display: grid;
@@ -404,32 +432,6 @@ function typeIcon(type: string) {
 }
 .today-grid > div + div {
   padding-left: 1rem;
-  border-left: 1px solid rgba(var(--v-border-color), 0.12);
-}
-.metric-card {
-  position: relative;
-  overflow: hidden;
-}
-.metric-icon {
-  position: absolute;
-  right: 1rem;
-  bottom: 0.6rem;
-  font-size: 3.8rem;
-  opacity: 0.08;
-}
-.metric-icon.income {
-  color: rgb(var(--v-theme-success));
-}
-.metric-icon.expense {
-  color: rgb(var(--v-theme-error));
-}
-.metric-icon.category {
-  color: rgb(var(--v-theme-primary));
-}
-@media (max-width: 599px) {
-  .transaction-amount {
-    max-width: 8rem;
-    font-size: 0.8rem;
-  }
+  border-left: 1px solid rgba(var(--v-border-color), 0.15);
 }
 </style>

@@ -1,4 +1,5 @@
 import type { Category, Transaction } from "@/types/finance";
+import { i18n } from "@/i18n";
 
 const BANGKOK_OFFSET = "+07:00";
 const MONTH_PATTERN = /^(\d{4})-(\d{2})$/;
@@ -71,7 +72,8 @@ export function bangkokMonthRange(month: string) {
 
 export function formatReportMonth(month: string): string {
   const { year, monthNumber } = monthParts(month);
-  return new Intl.DateTimeFormat("th-TH", {
+  const localeStr = i18n.global.locale.value === "th" ? "th-TH" : "en-US";
+  return new Intl.DateTimeFormat(localeStr, {
     timeZone: "Asia/Bangkok",
     year: "numeric",
     month: "long",
@@ -139,7 +141,7 @@ export function buildMonthlyReport(
       const category = categoryMap.get(id);
       return {
         id,
-        name: category?.name ?? "ไม่ระบุหมวดหมู่",
+        name: category?.name ?? "Unspecified",
         color: category?.color ?? "#8A8D93",
         icon: category?.icon ?? "shape-outline",
         amount,

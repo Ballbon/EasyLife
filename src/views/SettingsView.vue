@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 
 import PageState from "@/components/PageState.vue";
@@ -17,6 +18,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { accountTypeLabels } from "@/lib/transactions";
 
+const { t } = useI18n();
 const route = useRoute();
 const tab = computed(() => route.meta.settingsTab as "accounts" | "categories");
 const loading = ref(true);
@@ -34,10 +36,13 @@ const categoryForm = reactive({
   name: "",
   transactionType: "expense",
   icon: "circle",
-  color: "#9155FD",
+  color: "#7C3AED",
 });
-const accountTypes = Object.entries(accountTypeLabels).map(
-  ([value, title]) => ({ value, title }),
+const accountTypes = computed(() =>
+  Object.keys(accountTypeLabels).map((value) => ({
+    value,
+    title: t(`settings.accounts.types.${value}`),
+  })),
 );
 const usage = computed(() => {
   const counts = new Map<string, number>();
@@ -54,7 +59,7 @@ function resetCategoryForm() {
     name: "",
     transactionType: "expense",
     icon: "circle",
-    color: "#9155FD",
+    color: "#7C3AED",
   });
 }
 
@@ -74,7 +79,7 @@ async function refresh() {
   try {
     data.value = await loadFinanceData();
   } catch {
-    error.value = "โหลดการตั้งค่าไม่สำเร็จ กรุณาลองใหม่";
+    error.value = t("settings.messages.loadError");
   }
 }
 onMounted(async () => {
@@ -87,8 +92,8 @@ async function addAccount() {
   success.value = "";
   const amount = parseMoneyToSatang(accountForm.initialBalance);
   if (!accountForm.name.trim())
-    return void (error.value = "กรุณากรอกชื่อบัญชี");
-  if (amount === null) return void (error.value = "ยอดตั้งต้นไม่ถูกต้อง");
+    return void (error.value = t("settings.messages.enterAccountName"));
+  if (amount === null) return void (error.value = t("settings.messages.invalidInitialBalance"));
   pending.value = true;
   const userId = await currentUserId();
   const { error: insertError } = await supabase.from("accounts").insert({
@@ -98,14 +103,14 @@ async function addAccount() {
     initial_balance_satang: amount,
   });
   pending.value = false;
-  if (insertError) error.value = "เพิ่มบัญชีไม่สำเร็จ";
+  if (insertError) error.value = t("settings.messages.addAccountError");
   else {
     Object.assign(accountForm, {
       name: "",
       accountType: "cash",
       initialBalance: "0.00",
     });
-    success.value = "เพิ่มบัญชีแล้ว";
+    success.value = t("settings.messages.accountAdded");
     await refresh();
   }
 }
@@ -117,7 +122,7 @@ async function toggleAccount(id: string, active: boolean) {
     .update({ is_active: active })
     .eq("id", id)
     .eq("user_id", userId);
-  if (updateError) error.value = "เปลี่ยนสถานะบัญชีไม่สำเร็จ";
+  if (updateError) error.value = t("settings.messages.toggleAccountError");
   else await refresh();
 }
 
@@ -125,7 +130,7 @@ async function addCategory() {
   error.value = "";
   success.value = "";
   if (!categoryForm.name.trim())
-    return void (error.value = "กรุณากรอกชื่อหมวดหมู่");
+    return void (error.value = t("settings.messages.enterCategoryName"));
   pending.value = true;
   const userId = await currentUserId();
   const { error: insertError } = await supabase.from("categories").insert({
@@ -139,16 +144,16 @@ async function addCategory() {
   if (insertError)
     error.value =
       insertError.code === "23505"
-        ? "มีชื่อหมวดหมู่นี้แล้ว"
-        : "เพิ่มหมวดหมู่ไม่สำเร็จ";
+        ? t("settings.messages.categoryExists")
+        : t("settings.messages.addCategoryError");
   else {
     Object.assign(categoryForm, {
       name: "",
       transactionType: "expense",
       icon: "circle",
-      color: "#9155FD",
+      color: "#7C3AED",
     });
-    success.value = "เพิ่มหมวดหมู่แล้ว";
+    success.value = t("settings.messages.categoryAdded");
     await refresh();
   }
 }
@@ -157,7 +162,7 @@ async function updateCategory() {
   error.value = "";
   success.value = "";
   if (!categoryForm.name.trim())
-    return void (error.value = "กรุณากรอกชื่อหมวดหมู่");
+    return void (error.value = t("settings.messages.enterCategoryName"));
 
   const category = data.value?.categories.find(
     (item) => item.id === editingCategoryId.value,
@@ -183,13 +188,13 @@ async function updateCategory() {
   if (updateError) {
     error.value =
       updateError.code === "23505"
-        ? "มีชื่อหมวดหมู่นี้แล้ว"
-        : "แก้ไขหมวดหมู่ไม่สำเร็จ";
+        ? t("settings.messages.categoryExists")
+        : t("settings.messages.updateCategoryError");
     return;
   }
 
   resetCategoryForm();
-  success.value = "บันทึกการแก้ไขหมวดหมู่แล้ว";
+  success.value = t("settings.messages.categoryUpdated");
   await refresh();
 }
 
@@ -198,7 +203,7 @@ function submitCategory() {
 }
 
 async function removeCategory(id: string) {
-  if (!window.confirm("ยืนยันการลบหมวดหมู่นี้?")) return;
+  if (!window.confirm(t("settings.messages.confirmDeleteCategory"))) return;
   const userId = await currentUserId();
   const { error: deleteError } = await supabase
     .from("categories")
@@ -206,30 +211,32 @@ async function removeCategory(id: string) {
     .eq("id", id)
     .eq("user_id", userId)
     .eq("is_default", false);
-  if (deleteError) error.value = "ลบหมวดหมู่ไม่สำเร็จ";
+  if (deleteError) error.value = t("settings.messages.deleteCategoryError");
   else await refresh();
 }
 </script>
 
 <template>
   <PageState :loading="loading" :error="error && !data ? error : ''">
-    <div v-if="data">
+    <div v-if="data" class="settings-page">
       <div class="mb-6">
-        <p class="text-body-2 text-medium-emphasis">ปรับแต่งพื้นที่การเงิน</p>
-        <h1 class="page-title mt-1 mb-0">ตั้งค่าการเงิน</h1>
+        <p class="text-caption font-weight-medium text-disabled mb-1">{{ $t('settings.tagline') }}</p>
+        <h1 class="page-title mb-0">{{ $t('settings.title') }}</h1>
       </div>
-      <VTabs :model-value="tab" color="primary" class="mb-6">
+      <VTabs :model-value="tab" color="primary" class="mb-6" show-arrows>
         <VTab
           value="accounts"
           to="/settings/accounts"
           prepend-icon="mdi-wallet-outline"
-          >บัญชี</VTab
+          class="text-none font-weight-semibold"
+          >{{ $t('settings.tabs.accounts') }}</VTab
         >
         <VTab
           value="categories"
           to="/settings/categories"
           prepend-icon="mdi-shape-outline"
-          >หมวดหมู่</VTab
+          class="text-none font-weight-semibold"
+          >{{ $t('settings.tabs.categories') }}</VTab
         >
       </VTabs>
       <VAlert
@@ -237,7 +244,7 @@ async function removeCategory(id: string) {
         type="error"
         variant="tonal"
         closable
-        class="mb-5"
+        class="mb-5 rounded-lg"
         @click:close="error = ''"
         >{{ error }}</VAlert
       >
@@ -246,7 +253,7 @@ async function removeCategory(id: string) {
         type="success"
         variant="tonal"
         closable
-        class="mb-5"
+        class="mb-5 rounded-lg"
         @click:close="success = ''"
         >{{ success }}</VAlert
       >
@@ -257,22 +264,22 @@ async function removeCategory(id: string) {
             <VCard
               v-for="account in data.accounts"
               :key="account.id"
-              class="materio-card pa-5"
+              class="materio-card pa-5 rounded-xl"
               :class="{ 'opacity-60': !account.is_active }"
             >
               <div class="d-flex align-center ga-4">
-                <VAvatar color="primary" variant="tonal" rounded="lg"
-                  ><VIcon icon="mdi-wallet-outline"
+                <VAvatar color="primary" variant="tonal" rounded="lg" size="42"
+                  ><VIcon icon="mdi-wallet-outline" size="20"
                 /></VAvatar>
                 <div class="flex-grow-1">
-                  <p class="font-weight-semibold">{{ account.name }}</p>
-                  <p class="text-caption text-medium-emphasis">
-                    {{ accountTypeLabels[account.account_type] }} ·
-                    {{ account.is_active ? "ใช้งาน" : "ซ่อนอยู่" }}
+                  <p class="font-weight-bold text-body-2 mb-0">{{ account.name }}</p>
+                  <p class="text-caption text-medium-emphasis mb-0 mt-1">
+                    {{ $t(`settings.accounts.types.${account.account_type}`) }} ·
+                    {{ account.is_active ? $t('settings.accounts.active') : $t('settings.accounts.hidden') }}
                   </p>
                 </div>
                 <div class="text-right">
-                  <p class="font-weight-semibold">
+                  <p class="font-weight-bold text-body-2 mb-1">
                     {{
                       formatSatang(
                         calculateAccountBalance(
@@ -287,13 +294,14 @@ async function removeCategory(id: string) {
                     size="small"
                     variant="text"
                     color="secondary"
+                    class="text-none rounded-lg"
                     :prepend-icon="
                       account.is_active
                         ? 'mdi-eye-off-outline'
                         : 'mdi-eye-outline'
                     "
                     @click="toggleAccount(account.id, !account.is_active)"
-                    >{{ account.is_active ? "ซ่อน" : "เปิดใช้" }}</VBtn
+                    >{{ account.is_active ? $t('settings.accounts.hide') : $t('settings.accounts.show') }}</VBtn
                   >
                 </div>
               </div>
@@ -301,26 +309,29 @@ async function removeCategory(id: string) {
           </div>
         </VCol>
         <VCol cols="12" lg="4">
-          <VCard class="materio-card pa-6"
-            ><h2 class="text-h6 font-weight-semibold mb-5">เพิ่มบัญชี</h2>
+          <VCard class="materio-card pa-6 rounded-xl"
+            ><h2 class="text-subtitle-1 font-weight-bold mb-5">{{ $t('settings.accounts.addTitle') }}</h2>
             <VForm @submit.prevent="addAccount"
               ><VTextField
                 v-model="accountForm.name"
-                label="ชื่อบัญชี"
-                class="mb-2"
+                :label="$t('settings.accounts.nameLabel')"
+                class="mb-3"
+                rounded="lg"
               /><VSelect
                 v-model="accountForm.accountType"
-                label="ประเภท"
+                :label="$t('settings.accounts.typeLabel')"
                 :items="accountTypes"
-                class="mb-2"
+                class="mb-3"
+                rounded="lg"
               /><VTextField
                 v-model="accountForm.initialBalance"
-                label="ยอดตั้งต้น (บาท)"
+                :label="$t('settings.accounts.initialBalanceLabel')"
                 prefix="฿"
                 inputmode="decimal"
-                class="mb-3"
-              /><VBtn type="submit" color="primary" :loading="pending" block
-                >เพิ่มบัญชี</VBtn
+                class="mb-4"
+                rounded="lg"
+              /><VBtn type="submit" color="primary" class="text-none font-weight-medium rounded-lg" :loading="pending" block
+                >{{ $t('settings.accounts.addSubmit') }}</VBtn
               ></VForm
             ></VCard
           >
@@ -336,7 +347,7 @@ async function removeCategory(id: string) {
               cols="12"
               sm="6"
               ><VCard
-                class="materio-card pa-5 h-100 category-card"
+                class="materio-card pa-5 h-100 category-card rounded-xl"
                 :class="{
                   'category-card--editing': editingCategoryId === category.id,
                 }"
@@ -346,17 +357,19 @@ async function removeCategory(id: string) {
                       color: category.color,
                       backgroundColor: `${category.color}18`,
                     }"
-                    ><VIcon :icon="categoryIcon(category.icon)"
+                    rounded="lg"
+                    size="40"
+                    ><VIcon :icon="categoryIcon(category.icon)" size="20"
                   /></VAvatar>
                   <div class="flex-grow-1">
-                    <p class="font-weight-semibold">{{ category.name }}</p>
-                    <p class="text-caption text-medium-emphasis">
+                    <p class="font-weight-bold text-body-2 mb-0">{{ category.name }}</p>
+                    <p class="text-caption text-medium-emphasis mb-0 mt-1">
                       {{
                         category.transaction_type === "expense"
-                          ? "รายจ่าย"
-                          : "รายรับ"
+                          ? $t('transactions.expense')
+                          : $t('transactions.income')
                       }}
-                      · {{ usage.get(category.id) ?? 0 }} รายการ
+                      · {{ $t('settings.categories.itemsCount', { count: usage.get(category.id) ?? 0 }) }}
                     </p>
                   </div>
                   <div class="d-flex ga-1">
@@ -365,7 +378,7 @@ async function removeCategory(id: string) {
                       variant="text"
                       color="primary"
                       size="small"
-                      :aria-label="`แก้ไข ${category.name}`"
+                      :aria-label="$t('settings.categories.editCategory', { name: category.name })"
                       @click="editCategory(category)"
                     />
                     <VBtn
@@ -374,60 +387,65 @@ async function removeCategory(id: string) {
                       variant="text"
                       color="error"
                       size="small"
-                      :aria-label="`ลบ ${category.name}`"
+                      :aria-label="$t('settings.categories.deleteCategory', { name: category.name })"
                       @click="removeCategory(category.id)"
                     />
                   </div></div></VCard></VCol></VRow
         ></VCol>
         <VCol cols="12" lg="4"
-          ><VCard class="materio-card pa-6"
+          ><VCard class="materio-card pa-6 rounded-xl"
             ><div class="d-flex align-center justify-space-between mb-5">
-              <h2 class="text-h6 font-weight-semibold">
-                {{ editingCategoryId ? "แก้ไขหมวดหมู่" : "เพิ่มหมวดหมู่" }}
+              <h2 class="text-subtitle-1 font-weight-bold mb-0">
+                {{ editingCategoryId ? $t('settings.categories.editTitle') : $t('settings.categories.addTitle') }}
               </h2>
               <VBtn
                 v-if="editingCategoryId"
                 variant="text"
                 color="secondary"
                 size="small"
+                class="text-none rounded-lg"
                 @click="resetCategoryForm"
-                >ยกเลิก</VBtn
+                >{{ $t('common.cancel') }}</VBtn
               >
             </div>
             <VForm @submit.prevent="submitCategory"
               ><VTextField
                 v-model="categoryForm.name"
-                label="ชื่อหมวดหมู่"
-                class="mb-2"
+                :label="$t('settings.categories.nameLabel')"
+                class="mb-3"
+                rounded="lg"
               /><VSelect
                 v-model="categoryForm.transactionType"
-                label="ประเภท"
+                :label="$t('settings.categories.typeLabel')"
                 :items="[
-                  { title: 'รายจ่าย', value: 'expense' },
-                  { title: 'รายรับ', value: 'income' },
+                  { title: $t('transactions.expense'), value: 'expense' },
+                  { title: $t('transactions.income'), value: 'income' },
                 ]"
                 :disabled="
                   !!editingCategoryId && !!usage.get(editingCategoryId)
                 "
                 :hint="
                   editingCategoryId && usage.get(editingCategoryId)
-                    ? 'เปลี่ยนประเภทไม่ได้ เนื่องจากมีรายการในหมวดหมู่นี้แล้ว'
+                    ? $t('settings.categories.typeChangeDisabled')
                     : undefined
                 "
                 persistent-hint
-                class="mb-2"
+                class="mb-3"
+                rounded="lg"
               /><VSelect
                 v-model="categoryForm.icon"
-                label="ไอคอน"
+                :label="$t('settings.categories.iconLabel')"
                 :items="categoryIconItems"
-                class="mb-2"
+                class="mb-3"
+                rounded="lg"
               /><VTextField
                 v-model="categoryForm.color"
-                label="สี"
+                :label="$t('settings.categories.colorLabel')"
                 type="color"
-                class="mb-3"
-              /><VBtn type="submit" color="primary" :loading="pending" block>{{
-                editingCategoryId ? "บันทึกการแก้ไข" : "เพิ่มหมวดหมู่"
+                class="mb-4"
+                rounded="lg"
+              /><VBtn type="submit" color="primary" class="text-none font-weight-medium rounded-lg" :loading="pending" block>{{
+                editingCategoryId ? $t('settings.categories.saveEdit') : $t('settings.categories.addSubmit')
               }}</VBtn></VForm
             ></VCard
           ></VCol
@@ -449,7 +467,7 @@ async function removeCategory(id: string) {
 }
 
 .category-card--editing {
-  border-color: rgb(var(--v-theme-primary));
-  box-shadow: 0 0 0 1px rgb(var(--v-theme-primary));
+  border-color: rgb(var(--v-theme-primary)) !important;
+  box-shadow: 0 0 0 1px rgb(var(--v-theme-primary)) !important;
 }
 </style>

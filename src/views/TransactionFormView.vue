@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 
 import PageState from "@/components/PageState.vue";
@@ -12,11 +13,11 @@ import {
 } from "@/lib/finance";
 import {
   isoToBangkokLocalInput,
-  transactionTypeLabels,
   type TransactionType,
 } from "@/lib/transactions";
 import type { FieldErrors, TransactionDraft } from "@/types/finance";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { goBack } = useAppNavigation();
@@ -58,7 +59,7 @@ onMounted(async () => {
       const item = data.value.transactions.find(
         (transaction) => transaction.id === id.value,
       );
-      if (!item) throw new Error("ไม่พบรายการที่ต้องการแก้ไข");
+      if (!item) throw new Error(t("transactionForm.messages.notFound"));
       Object.assign(draft, {
         transactionType: item.transaction_type as TransactionType,
         amount: (Number(item.amount_satang) / 100).toFixed(2),
@@ -71,7 +72,7 @@ onMounted(async () => {
     } else if (accounts.value.length) draft.accountId = accounts.value[0].id;
   } catch (cause) {
     error.value =
-      cause instanceof Error ? cause.message : "โหลดข้อมูลไม่สำเร็จ";
+      cause instanceof Error ? cause.message : t("transactionForm.messages.loadError");
   } finally {
     loading.value = false;
   }
@@ -91,20 +92,20 @@ async function submit() {
     if (!Object.values(errors.value).some(Boolean))
       await router.push("/transactions");
   } catch {
-    error.value = "บันทึกรายการไม่สำเร็จ กรุณาลองใหม่";
+    error.value = t("transactionForm.messages.saveError");
   } finally {
     pending.value = false;
   }
 }
 
 async function remove() {
-  if (!id.value || !window.confirm("ยืนยันการลบรายการนี้?")) return;
+  if (!id.value || !window.confirm(t("transactionForm.messages.confirmDelete"))) return;
   deleting.value = true;
   try {
     await deleteTransaction(id.value);
     await router.push("/transactions");
   } catch {
-    error.value = "ลบรายการไม่สำเร็จ กรุณาลองใหม่";
+    error.value = t("transactionForm.messages.deleteError");
     deleting.value = false;
   }
 }
@@ -120,13 +121,13 @@ async function remove() {
             variant="text"
             size="small"
             class="mr-2"
-            aria-label="ย้อนกลับ"
-            title="ย้อนกลับ"
+            :aria-label="$t('transactionForm.back')"
+            :title="$t('transactionForm.back')"
             @click="goBack('/transactions')"
           />
         </template>
         <VCardTitle class="font-weight-semibold">{{
-          id ? "แก้ไขรายการ" : "เพิ่มรายการ"
+          id ? $t('transactionForm.titleEdit') : $t('transactionForm.titleCreate')
         }}</VCardTitle>
         <template v-if="id" #append
           ><VBtn
@@ -135,7 +136,7 @@ async function remove() {
             prepend-icon="mdi-delete-outline"
             :loading="deleting"
             @click="remove"
-            >ลบรายการ</VBtn
+            >{{ $t('transactionForm.deleteTransaction') }}</VBtn
           ></template
         >
       </VCardItem>
@@ -149,10 +150,10 @@ async function remove() {
           type="warning"
           variant="tonal"
           class="mb-6"
-          >กรุณาสร้างบัญชีที่ใช้งานก่อนเพิ่มรายการ</VAlert
+          >{{ $t('transactionForm.createAccountFirst') }}</VAlert
         >
         <VForm v-else @submit.prevent="submit">
-          <VLabel class="mb-2">ประเภทรายการ</VLabel>
+          <VLabel class="mb-2">{{ $t('transactionForm.typeLabel') }}</VLabel>
           <VBtnToggle
             v-model="draft.transactionType"
             color="primary"
@@ -165,12 +166,12 @@ async function remove() {
               :key="type"
               :value="type"
               class="flex-grow-1"
-              >{{ transactionTypeLabels[type] }}</VBtn
+              >{{ $t(`transactions.${type}`) }}</VBtn
             >
           </VBtnToggle>
           <VTextField
             v-model="draft.amount"
-            label="จำนวนเงิน (บาท)"
+            :label="$t('transactionForm.amountLabel')"
             inputmode="decimal"
             prefix="฿"
             class="amount-field mb-2"
@@ -181,7 +182,7 @@ async function remove() {
               ><VSelect
                 v-model="draft.accountId"
                 :label="
-                  draft.transactionType === 'transfer' ? 'บัญชีต้นทาง' : 'บัญชี'
+                  draft.transactionType === 'transfer' ? $t('quickAdd.sourceAccount') : $t('transactions.account')
                 "
                 :items="accounts.map((a) => ({ title: a.name, value: a.id }))"
                 :error-messages="errors.accountId"
@@ -190,27 +191,27 @@ async function remove() {
               ><VSelect
                 v-if="draft.transactionType === 'transfer'"
                 v-model="draft.destinationAccountId"
-                label="บัญชีปลายทาง"
+                :label="$t('quickAdd.destinationAccount')"
                 :items="accounts.map((a) => ({ title: a.name, value: a.id }))"
                 :error-messages="errors.destinationAccountId" /><VSelect
                 v-else
                 v-model="draft.categoryId"
-                label="หมวดหมู่"
+                :label="$t('quickAdd.selectCategory')"
                 :items="categories.map((c) => ({ title: c.name, value: c.id }))"
                 :error-messages="errors.categoryId"
             /></VCol>
           </VRow>
           <VTextField
             v-model="draft.occurredAt"
-            label="วันที่และเวลา (เวลาไทย)"
+            :label="$t('transactionForm.dateLabel')"
             type="datetime-local"
             :error-messages="errors.occurredAt"
             class="mb-2"
           />
           <VTextarea
             v-model="draft.note"
-            label="โน้ต"
-            placeholder="เพิ่มรายละเอียด..."
+            :label="$t('quickAdd.note')"
+            :placeholder="$t('quickAdd.notePlaceholder')"
             rows="3"
             maxlength="500"
             counter
@@ -223,14 +224,14 @@ async function remove() {
               size="large"
               class="flex-grow-1"
               @click="goBack('/transactions')"
-              >ยกเลิก</VBtn
+              >{{ $t('common.cancel') }}</VBtn
             ><VBtn
               type="submit"
               color="primary"
               size="large"
               class="flex-grow-1"
               :loading="pending"
-              >บันทึกรายการ</VBtn
+              >{{ $t('common.save') }}</VBtn
             >
           </div>
         </VForm>

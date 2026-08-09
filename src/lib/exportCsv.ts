@@ -1,3 +1,4 @@
+import { i18n } from "@/i18n";
 import type { Account, Category, Transaction } from "@/types/finance";
 import {
   formatBangkokDateTime,
@@ -14,13 +15,13 @@ export function generateTransactionsCsv(
   const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
 
   const headers = [
-    "วันที่เวลา",
-    "ประเภท",
-    "หมวดหมู่",
-    "บัญชีต้นทาง",
-    "บัญชีปลายทาง",
-    "จำนวนเงิน (บาท)",
-    "หมายเหตุ",
+    i18n.global.t("csv.headers.datetime"),
+    i18n.global.t("csv.headers.type"),
+    i18n.global.t("csv.headers.category"),
+    i18n.global.t("csv.headers.account"),
+    i18n.global.t("csv.headers.destinationAccount"),
+    i18n.global.t("csv.headers.amount"),
+    i18n.global.t("csv.headers.note"),
   ];
 
   const escapeCsv = (str: string) => {
@@ -31,9 +32,11 @@ export function generateTransactionsCsv(
   };
 
   const rows = transactions.map((t) => {
-    const typeLabel =
-      transactionTypeLabels[t.transaction_type as TransactionType] ??
-      t.transaction_type;
+    const typeKey = `transactions.${t.transaction_type}`;
+    const typeLabel = i18n.global.te(typeKey)
+      ? i18n.global.t(typeKey)
+      : (transactionTypeLabels[t.transaction_type as TransactionType] ??
+        t.transaction_type);
     const catName = t.category_id ? (categoryMap.get(t.category_id) ?? "") : "";
     const accName = accountMap.get(t.account_id) ?? "";
     const destAccName = t.destination_account_id

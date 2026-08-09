@@ -26,7 +26,7 @@ defineEmits<{
   >
     <div class="d-flex flex-wrap align-center justify-space-between ga-3">
       <div>
-        <div class="font-weight-bold text-subtitle-1">เกิดข้อผิดพลาดในการโหลดข้อมูล</div>
+        <div class="font-weight-bold text-subtitle-1">{{ $t('components.pageState.error') }}</div>
         <div class="text-body-2">{{ error }}</div>
       </div>
       <VBtn
@@ -36,7 +36,7 @@ defineEmits<{
         prepend-icon="mdi-refresh"
         @click="$emit('retry')"
       >
-        ลองใหม่อีกครั้ง
+        {{ $t('components.pageState.retry') }}
       </VBtn>
     </div>
   </VAlert>

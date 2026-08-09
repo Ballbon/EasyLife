@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { z } from "zod";
 
@@ -9,6 +10,7 @@ import { parseMoneyToSatang } from "@/lib/money";
 import { supabase } from "@/lib/supabase";
 import type { FieldErrors } from "@/types/finance";
 
+const { t } = useI18n();
 const router = useRouter();
 const { goBack } = useAppNavigation();
 const pending = ref(false);
@@ -21,12 +23,12 @@ const form = reactive({
   accountType: "cash",
   initialBalance: "0.00",
 });
-const accountTypes = [
-  { title: "เงินสด", value: "cash" },
-  { title: "บัญชีธนาคาร", value: "bank" },
-  { title: "บัตร", value: "card" },
-  { title: "e-Wallet", value: "ewallet" },
-];
+const accountTypes = computed(() => [
+  { title: t("settings.accounts.types.cash"), value: "cash" },
+  { title: t("settings.accounts.types.bank"), value: "bank" },
+  { title: t("settings.accounts.types.card"), value: "card" },
+  { title: t("settings.accounts.types.ewallet"), value: "ewallet" },
+]);
 
 onMounted(async () => {
   try {
@@ -48,9 +50,9 @@ async function submit() {
     displayName: z
       .string()
       .trim()
-      .min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร")
+      .min(2, t("onboarding.validation.nameMin"))
       .max(80),
-    accountName: z.string().trim().min(1, "กรุณากรอกชื่อบัญชี").max(80),
+    accountName: z.string().trim().min(1, t("settings.messages.enterAccountName")).max(80),
     accountType: z.enum(["cash", "bank", "card", "ewallet"]),
     initialBalance: z.string(),
   });
@@ -61,8 +63,7 @@ async function submit() {
       errors.value[String(issue.path[0])] = issue.message;
   const satang = parseMoneyToSatang(form.initialBalance);
   if (satang === null)
-    errors.value.initialBalance =
-      "กรอกเป็นเงินบาทไม่เกิน 2 ตำแหน่ง เช่น 1250.50";
+    errors.value.initialBalance = t("onboarding.validation.invalidBalance");
   if (Object.values(errors.value).some(Boolean) || satang === null) return;
   pending.value = true;
   message.value = "";
@@ -73,7 +74,7 @@ async function submit() {
     initial_balance_satang_input: satang,
   });
   pending.value = false;
-  if (error) message.value = "ตั้งค่าเริ่มต้นไม่สำเร็จ กรุณาลองใหม่";
+  if (error) message.value = t("onboarding.messages.setupError");
   else await router.replace("/dashboard");
 }
 </script>
@@ -91,24 +92,23 @@ async function submit() {
               ><VIcon icon="mdi-sprout" /></VAvatar
             ><span class="text-h5 font-weight-bold">EasyLife</span>
           </div>
-          <h1 class="text-h3 font-weight-bold mb-5">
-            เริ่มเห็นภาพการเงิน<br />ในไม่กี่นาที
+          <h1 class="text-h3 font-weight-bold mb-5" v-html="$t('onboarding.heroTitle')">
           </h1>
           <p class="text-h6 text-medium-emphasis mb-8">
-            สร้างบัญชีแรก จากนั้นระบบจะเตรียมหมวดหมู่พื้นฐานให้พร้อมใช้งาน
+            {{ $t('onboarding.heroSubtitle') }}
           </p>
           <VList bg-color="transparent">
             <VListItem
               prepend-icon="mdi-clock-fast"
-              title="ตั้งค่าเพียงครั้งเดียว"
+              :title="$t('onboarding.features.once')"
             />
             <VListItem
               prepend-icon="mdi-chart-donut"
-              title="ยอดตั้งต้นไม่ถูกนับเป็นรายรับ"
+              :title="$t('onboarding.features.notIncome')"
             />
             <VListItem
               prepend-icon="mdi-shield-check-outline"
-              title="ข้อมูลแยกด้วย Row Level Security"
+              :title="$t('onboarding.features.rls')"
             />
           </VList>
         </VCol>
@@ -123,12 +123,12 @@ async function submit() {
                 class="px-0"
                 @click="goBack('/login')"
               >
-                ย้อนกลับ
+                {{ $t('transactionForm.back') }}
               </VBtn>
             </div>
-            <h2 class="text-h4 font-weight-semibold">ตั้งค่าเริ่มต้น</h2>
+            <h2 class="text-h4 font-weight-semibold">{{ $t('onboarding.title') }}</h2>
             <p class="mt-2 mb-7 text-medium-emphasis">
-              ข้อมูลนี้แก้ไขภายหลังได้ในการตั้งค่า
+              {{ $t('onboarding.subtitle') }}
             </p>
             <VAlert v-if="message" type="error" variant="tonal" class="mb-5">{{
               message
@@ -136,30 +136,30 @@ async function submit() {
             <VForm @submit.prevent="submit">
               <VTextField
                 v-model="form.displayName"
-                label="ชื่อที่ใช้ในแอป"
+                :label="$t('onboarding.displayNameLabel')"
                 :error-messages="errors.displayName"
                 class="mb-2"
               />
               <VTextField
                 v-model="form.accountName"
-                label="ชื่อบัญชีแรก"
+                :label="$t('onboarding.accountNameLabel')"
                 :error-messages="errors.accountName"
                 class="mb-2"
               />
               <VSelect
                 v-model="form.accountType"
-                label="ประเภทบัญชี"
+                :label="$t('settings.accounts.typeLabel')"
                 :items="accountTypes"
                 :error-messages="errors.accountType"
                 class="mb-2"
               />
               <VTextField
                 v-model="form.initialBalance"
-                label="ยอดคงเหลือปัจจุบัน (บาท)"
+                :label="$t('onboarding.initialBalanceLabel')"
                 inputmode="decimal"
                 prefix="฿"
                 :error-messages="errors.initialBalance"
-                hint="ยอดนี้เป็นจุดเริ่มต้นในการคำนวณ ไม่ถูกนับเป็นรายรับ"
+                :hint="$t('onboarding.initialBalanceHint')"
                 persistent-hint
                 class="mb-6"
               />
@@ -169,7 +169,7 @@ async function submit() {
                 size="large"
                 color="primary"
                 :loading="pending"
-                >เริ่มใช้ EasyLife</VBtn
+                >{{ $t('onboarding.submit') }}</VBtn
               >
             </VForm>
           </VCard>

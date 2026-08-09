@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   loadFinanceData,
   saveTransaction,
@@ -7,11 +8,11 @@ import {
 } from "@/lib/finance";
 import {
   isoToBangkokLocalInput,
-  transactionTypeLabels,
   type TransactionType,
 } from "@/lib/transactions";
 import type { FieldErrors, TransactionDraft } from "@/types/finance";
 
+const { t } = useI18n();
 const props = defineProps<{
   modelValue: boolean;
 }>();
@@ -58,7 +59,7 @@ async function initData() {
       draft.accountId = accounts.value[0].id;
     }
   } catch {
-    error.value = "ไม่สามารถโหลดข้อมูลบัญชีและหมวดหมู่ได้";
+    error.value = t("components.pageState.error");
   } finally {
     loading.value = false;
   }
@@ -107,7 +108,7 @@ async function submit() {
       emit("saved");
     }
   } catch {
-    error.value = "บันทึกรายการไม่สำเร็จ กรุณาลองใหม่";
+    error.value = t("components.pageState.error");
   } finally {
     pending.value = false;
   }
@@ -127,13 +128,13 @@ async function submit() {
           <VAvatar color="primary" variant="tonal" size="36">
             <VIcon icon="mdi-flash-outline" />
           </VAvatar>
-          <span class="text-h6 font-weight-bold">บันทึกรายการด่วน</span>
+          <span class="text-h6 font-weight-bold">{{ $t('quickAdd.title') }}</span>
         </div>
         <VBtn
           icon="mdi-close"
           variant="text"
           size="small"
-          aria-label="ปิด"
+          :aria-label="$t('common.cancel')"
           @click="emit('update:modelValue', false)"
         />
       </VCardTitle>
@@ -163,14 +164,14 @@ async function submit() {
               :value="type"
               class="flex-grow-1"
             >
-              {{ transactionTypeLabels[type] }}
+              {{ $t(`transactions.${type}`) }}
             </VBtn>
           </VBtnToggle>
 
           <!-- Amount Input & Presets -->
           <VTextField
             v-model="draft.amount"
-            label="จำนวนเงิน (บาท)"
+            :label="$t('quickAdd.amount')"
             inputmode="decimal"
             prefix="฿"
             autofocus
@@ -195,7 +196,7 @@ async function submit() {
           <!-- Quick Category Chips -->
           <template v-if="draft.transactionType !== 'transfer'">
             <div class="text-caption font-weight-bold text-medium-emphasis mb-2">
-              หมวดหมู่ยอดนิยม
+              {{ $t('quickAdd.popularCategories') }}
             </div>
             <div class="d-flex flex-wrap ga-2 mb-4" style="max-height: 120px; overflow-y: auto;">
               <VChip
@@ -216,7 +217,7 @@ async function submit() {
             <VCol cols="12" sm="6">
               <VSelect
                 v-model="draft.accountId"
-                :label="draft.transactionType === 'transfer' ? 'บัญชีต้นทาง' : 'บัญชี'"
+                :label="draft.transactionType === 'transfer' ? $t('quickAdd.sourceAccount') : $t('transactions.account')"
                 :items="accounts.map((a) => ({ title: a.name, value: a.id }))"
                 :error-messages="errors.accountId"
                 density="compact"
@@ -226,7 +227,7 @@ async function submit() {
               <VSelect
                 v-if="draft.transactionType === 'transfer'"
                 v-model="draft.destinationAccountId"
-                label="บัญชีปลายทาง"
+                :label="$t('quickAdd.destinationAccount')"
                 :items="accounts.map((a) => ({ title: a.name, value: a.id }))"
                 :error-messages="errors.destinationAccountId"
                 density="compact"
@@ -234,7 +235,7 @@ async function submit() {
               <VSelect
                 v-else
                 v-model="draft.categoryId"
-                label="เลือกหมวดหมู่ทั้งหมด"
+                :label="$t('quickAdd.selectCategory')"
                 :items="categories.map((c) => ({ title: c.name, value: c.id }))"
                 :error-messages="errors.categoryId"
                 density="compact"
@@ -244,9 +245,9 @@ async function submit() {
 
           <VTextField
             v-model="draft.note"
-            label="โน้ต (เช่น กาแฟเช้า)"
+            :label="$t('quickAdd.note')"
             density="compact"
-            placeholder="รายละเอียดเพิ่มเติม..."
+            :placeholder="$t('quickAdd.notePlaceholder')"
             class="mt-2"
           />
 
@@ -257,7 +258,7 @@ async function submit() {
               class="flex-grow-1"
               @click="emit('update:modelValue', false)"
             >
-              ยกเลิก
+              {{ $t('common.cancel') }}
             </VBtn>
             <VBtn
               type="submit"
@@ -265,7 +266,7 @@ async function submit() {
               class="flex-grow-1"
               :loading="pending"
             >
-              บันทึกทันที
+              {{ $t('quickAdd.submit') }}
             </VBtn>
           </div>
         </VForm>

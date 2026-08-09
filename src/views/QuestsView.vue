@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 
 import PageState from "@/components/PageState.vue";
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/lib/quests";
 import { nextMonth, previousMonth } from "@/lib/reports";
 
+const { t, locale } = useI18n();
 const today = currentBangkokDate();
 const loading = ref(true);
 const pending = ref(false);
@@ -33,15 +35,15 @@ const dialog = ref(false);
 const selectedDate = ref(today);
 const selectedMonth = ref(today.slice(0, 7));
 
-const weekdays = [
-  { value: 1, label: "จ" },
-  { value: 2, label: "อ" },
-  { value: 3, label: "พ" },
-  { value: 4, label: "พฤ" },
-  { value: 5, label: "ศ" },
-  { value: 6, label: "ส" },
-  { value: 0, label: "อา" },
-];
+const weekdays = computed(() => [
+  { value: 1, label: t("quests.weekdays.mon") },
+  { value: 2, label: t("quests.weekdays.tue") },
+  { value: 3, label: t("quests.weekdays.wed") },
+  { value: 4, label: t("quests.weekdays.thu") },
+  { value: 5, label: t("quests.weekdays.fri") },
+  { value: 6, label: t("quests.weekdays.sat") },
+  { value: 0, label: t("quests.weekdays.sun") },
+]);
 const form = reactive<QuestDraft>(emptyForm());
 
 const todayQuests = computed(() => occurrences(today));
@@ -127,7 +129,7 @@ async function loadData() {
   try {
     await refresh();
   } catch {
-    error.value = "โหลดภารกิจไม่สำเร็จ กรุณาลองใหม่";
+    error.value = t("quests.messages.loadError");
   } finally {
     loading.value = false;
   }
@@ -164,16 +166,16 @@ async function submitQuest() {
   await runAction(async () => {
     await saveQuest(form);
     dialog.value = false;
-    success.value = form.id ? "อัปเดต Quest แล้ว" : "สร้าง Quest แล้ว";
+    success.value = form.id ? t("quests.messages.questUpdated") : t("quests.messages.questCreated");
   });
 }
 
 async function removeQuest() {
-  if (!form.id || !window.confirm("ลบ Quest นี้รวมถึงประวัติทั้งหมด?")) return;
+  if (!form.id || !window.confirm(t("quests.messages.confirmDelete"))) return;
   await runAction(async () => {
     await deleteQuest(form.id!);
     dialog.value = false;
-    success.value = "ลบ Quest แล้ว";
+    success.value = t("quests.messages.questDeleted");
   });
 }
 
@@ -189,7 +191,7 @@ async function toggle(occurrence: QuestOccurrence) {
     );
     await refresh();
   } catch {
-    error.value = "บันทึกสถานะไม่สำเร็จ กรุณาลองใหม่";
+    error.value = t("quests.messages.toggleError");
   } finally {
     togglingId.value = "";
   }
@@ -205,7 +207,7 @@ async function runAction(action: () => Promise<void>) {
     await refresh();
   } catch (caught) {
     error.value =
-      caught instanceof Error ? caught.message : "บันทึกไม่สำเร็จ กรุณาลองใหม่";
+      caught instanceof Error ? caught.message : t("quests.messages.saveError");
   } finally {
     pending.value = false;
   }
@@ -224,32 +226,33 @@ function moveMonth(direction: -1 | 1) {
 }
 
 function formatDate(date: string, options: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat("th-TH", {
+  const loc = locale.value === "th" ? "th-TH" : "en-US";
+  return new Intl.DateTimeFormat(loc, {
     timeZone: "UTC",
     ...options,
   }).format(new Date(`${date}T12:00:00Z`));
 }
 
 function frequencyLabel(occurrence: QuestOccurrence) {
-  if (occurrence.schedule.frequency === "once") return "ครั้งเดียว";
-  if (occurrence.schedule.frequency === "daily") return "ทุกวัน";
-  return "รายสัปดาห์";
+  if (occurrence.schedule.frequency === "once") return t("quests.frequencies.once");
+  if (occurrence.schedule.frequency === "daily") return t("quests.frequencies.daily");
+  return t("quests.frequencies.weekly");
 }
 </script>
 
 <template>
   <PageState :loading="loading" :error="error && !data ? error : ''" skeleton-type="list" @retry="loadData">
     <div v-if="data" class="quests-page">
-      <header class="quest-header mb-5">
+      <header class="d-flex flex-wrap align-center justify-space-between ga-4 mb-6">
         <div>
-          <p class="text-overline text-primary">Daily rhythm</p>
-          <h1 class="page-title">วันนี้ เอาให้จบทีละอย่าง</h1>
-          <p class="text-body-2 text-medium-emphasis mt-1">
-            วางจังหวะเล็ก ๆ ให้ทุกวันขยับไปข้างหน้า
+          <p class="text-caption font-weight-medium text-disabled mb-1">{{ $t('quests.tagline') }}</p>
+          <h1 class="page-title mb-0">{{ $t('quests.title') }}</h1>
+          <p class="text-body-2 text-medium-emphasis mt-1 mb-0">
+            {{ $t('quests.subtitle') }}
           </p>
         </div>
-        <VBtn color="primary" prepend-icon="mdi-plus" @click="openNew(today)">
-          สร้าง Quest
+        <VBtn color="primary" prepend-icon="mdi-plus" class="text-none font-weight-medium rounded-lg px-4" @click="openNew(today)">
+          {{ $t('quests.createQuest') }}
         </VBtn>
       </header>
 
@@ -258,7 +261,7 @@ function frequencyLabel(occurrence: QuestOccurrence) {
         type="error"
         variant="tonal"
         closable
-        class="mb-4"
+        class="mb-4 rounded-lg"
         @click:close="error = ''"
         >{{ error }}</VAlert
       >
@@ -267,16 +270,19 @@ function frequencyLabel(occurrence: QuestOccurrence) {
         type="success"
         variant="tonal"
         closable
-        class="mb-4"
+        class="mb-4 rounded-lg"
         @click:close="success = ''"
         >{{ success }}</VAlert
       >
 
-      <section class="rhythm-board mb-5" aria-label="สรุป Daily Quest">
+      <!-- RHYTHM HERO BOARD -->
+      <section class="rhythm-board mb-6 rounded-xl pa-6" :aria-label="$t('quests.hero.title')">
         <div class="score-block">
-          <span class="score-kicker">จังหวะต่อเนื่อง</span>
-          <strong>{{ streak }}</strong>
-          <span>วัน</span>
+          <span class="score-kicker mb-1">{{ $t('quests.hero.streak') }}</span>
+          <div class="d-flex align-baseline ga-1">
+            <strong class="text-h3 font-weight-bold">{{ streak }}</strong>
+            <span class="text-caption">{{ $t('quests.hero.days') }}</span>
+          </div>
         </div>
         <div class="week-trail">
           <button
@@ -307,24 +313,24 @@ function frequencyLabel(occurrence: QuestOccurrence) {
         <div class="points-block">
           <VIcon icon="mdi-star-four-points" color="warning" size="22" />
           <div>
-            <strong>{{ points }}</strong
-            ><span> คะแนนสะสม</span>
+            <strong class="text-subtitle-1 font-weight-bold">{{ points }}</strong>
+            <span class="text-caption"> {{ $t('quests.hero.points') }}</span>
           </div>
         </div>
       </section>
 
-      <VTabs v-model="tab" color="primary" class="quest-tabs mb-5" grow>
-        <VTab value="today">วันนี้</VTab>
-        <VTab value="calendar">ปฏิทิน</VTab>
-        <VTab value="history">ประวัติ</VTab>
+      <VTabs v-model="tab" color="primary" class="quest-tabs mb-6" grow>
+        <VTab value="today" class="text-none font-weight-semibold">{{ $t('quests.tabs.today') }}</VTab>
+        <VTab value="calendar" class="text-none font-weight-semibold">{{ $t('quests.tabs.calendar') }}</VTab>
+        <VTab value="history" class="text-none font-weight-semibold">{{ $t('quests.tabs.history') }}</VTab>
       </VTabs>
 
       <VWindow v-model="tab">
         <VWindowItem value="today">
-          <section class="quest-panel">
-            <div class="section-heading">
+          <section class="quest-panel materio-card rounded-xl pa-6">
+            <div class="d-flex align-center justify-space-between mb-4">
               <div>
-                <p class="text-caption text-medium-emphasis">
+                <p class="text-caption text-medium-emphasis mb-1">
                   {{
                     formatDate(today, {
                       weekday: "long",
@@ -333,7 +339,7 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                     })
                   }}
                 </p>
-                <h2>Quest วันนี้</h2>
+                <h2 class="text-subtitle-1 font-weight-bold mb-0">{{ $t('quests.todayTitle') }}</h2>
               </div>
               <span class="completion-count"
                 >{{ completedToday }} / {{ todayQuests.length }}</span
@@ -354,14 +360,14 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                   "
                   :aria-label="
                     occurrence.completion
-                      ? `ยกเลิก ${occurrence.task.title}`
-                      : `ทำ ${occurrence.task.title} เสร็จแล้ว`
+                      ? $t('quests.cancelTask', { title: occurrence.task.title })
+                      : $t('quests.completeTask', { title: occurrence.task.title })
                   "
                   @update:model-value="toggle(occurrence)"
                 />
                 <div class="quest-copy">
-                  <strong>{{ occurrence.task.title }}</strong>
-                  <span>
+                  <strong class="font-weight-semibold text-body-2">{{ occurrence.task.title }}</strong>
+                  <span class="text-caption text-medium-emphasis">
                     <template v-if="occurrence.schedule.scheduled_time">
                       {{ occurrence.schedule.scheduled_time.slice(0, 5) }} ·
                     </template>
@@ -373,17 +379,17 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                   icon="mdi-dots-horizontal"
                   variant="text"
                   size="small"
-                  :aria-label="`แก้ไข ${occurrence.task.title}`"
+                  :aria-label="$t('quests.editTask', { title: occurrence.task.title })"
                   @click="openEdit(occurrence)"
                 />
               </article>
             </div>
-            <div v-else class="empty-quest">
-              <VIcon icon="mdi-weather-sunset" size="44" color="primary" />
-              <h3>วันนี้ยังโล่งอยู่</h3>
-              <p>เพิ่มหนึ่งสิ่งสำคัญที่อยากทำให้จบ</p>
-              <VBtn color="primary" variant="tonal" @click="openNew(today)"
-                >เพิ่ม Quest วันนี้</VBtn
+            <div v-else class="empty-quest py-10">
+              <VIcon icon="mdi-weather-sunset" size="44" color="primary" class="mb-2" />
+              <h3 class="text-h6 font-weight-bold">{{ $t('quests.emptyTodayTitle') }}</h3>
+              <p class="text-body-2 text-medium-emphasis">{{ $t('quests.emptyTodaySubtitle') }}</p>
+              <VBtn color="primary" variant="tonal" class="text-none font-weight-medium rounded-lg mt-2" @click="openNew(today)"
+                >{{ $t('quests.addTodayQuest') }}</VBtn
               >
             </div>
           </section>
@@ -391,15 +397,15 @@ function frequencyLabel(occurrence: QuestOccurrence) {
 
         <VWindowItem value="calendar">
           <div class="calendar-layout">
-            <section class="quest-panel calendar-panel">
-              <div class="calendar-header">
+            <section class="quest-panel calendar-panel materio-card rounded-xl pa-6">
+              <div class="calendar-header mb-4">
                 <VBtn
                   icon="mdi-chevron-left"
                   variant="text"
-                  aria-label="เดือนก่อน"
+                  :aria-label="$t('quests.prevMonth')"
                   @click="moveMonth(-1)"
                 />
-                <h2>
+                <h2 class="text-subtitle-1 font-weight-bold mb-0">
                   {{
                     formatDate(`${selectedMonth}-01`, {
                       month: "long",
@@ -410,12 +416,12 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                 <VBtn
                   icon="mdi-chevron-right"
                   variant="text"
-                  aria-label="เดือนถัดไป"
+                  :aria-label="$t('quests.nextMonth')"
                   @click="moveMonth(1)"
                 />
               </div>
-              <div class="calendar-grid calendar-weekdays">
-                <span v-for="day in weekdays" :key="day.value">{{
+              <div class="calendar-grid calendar-weekdays mb-2">
+                <span v-for="day in weekdays" :key="day.value" class="text-caption text-disabled font-weight-bold">{{
                   day.label
                 }}</span>
               </div>
@@ -444,11 +450,11 @@ function frequencyLabel(occurrence: QuestOccurrence) {
               </div>
             </section>
 
-            <aside class="quest-panel day-agenda">
-              <div class="section-heading">
+            <aside class="quest-panel day-agenda materio-card rounded-xl pa-6">
+              <div class="d-flex align-center justify-space-between mb-4">
                 <div>
-                  <p class="text-caption text-medium-emphasis">แผนของวันที่</p>
-                  <h2>
+                  <p class="text-caption text-medium-emphasis mb-1">{{ $t('quests.dayPlan') }}</p>
+                  <h2 class="text-subtitle-1 font-weight-bold mb-0">
                     {{
                       formatDate(selectedDate, {
                         day: "numeric",
@@ -461,7 +467,8 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                   icon="mdi-plus"
                   color="primary"
                   size="small"
-                  aria-label="เพิ่ม Quest วันที่เลือก"
+                  :aria-label="$t('quests.addSelectedDateQuest')"
+                  class="rounded-lg"
                   @click="openNew(selectedDate)"
                 />
               </div>
@@ -480,42 +487,43 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                         : 'mdi-circle-outline'
                     "
                     :color="occurrence.completion ? 'success' : 'secondary'"
+                    size="20"
                   />
-                  <span>{{ occurrence.task.title }}</span>
-                  <small>+{{ occurrence.task.points }}</small>
+                  <span class="text-body-2 font-weight-medium ml-2">{{ occurrence.task.title }}</span>
+                  <small class="text-caption font-weight-bold ml-auto">+{{ occurrence.task.points }}</small>
                 </button>
               </div>
               <p
                 v-else
                 class="text-body-2 text-medium-emphasis py-8 text-center"
               >
-                ไม่มี Quest ในวันนี้
+                {{ $t('quests.noQuestToday') }}
               </p>
             </aside>
           </div>
         </VWindowItem>
 
         <VWindowItem value="history">
-          <section class="quest-panel">
-            <div class="section-heading">
+          <section class="quest-panel materio-card rounded-xl pa-6">
+            <div class="d-flex align-center justify-space-between mb-4">
               <div>
-                <p class="text-caption text-medium-emphasis">60 รายการล่าสุด</p>
-                <h2>สิ่งที่ทำสำเร็จ</h2>
+                <p class="text-caption text-medium-emphasis mb-1">{{ $t('quests.recentItems') }}</p>
+                <h2 class="text-subtitle-1 font-weight-bold mb-0">{{ $t('quests.completedTitle') }}</h2>
               </div>
-              <span class="completion-count">{{ history.length }} ครั้ง</span>
+              <span class="completion-count">{{ $t('quests.timesCount', { count: history.length }) }}</span>
             </div>
             <div v-if="history.length" class="history-list">
               <article
                 v-for="item in history"
                 :key="item.completion.id"
-                class="history-row"
+                class="history-row py-3"
               >
-                <VAvatar color="success" variant="tonal" size="38"
-                  ><VIcon icon="mdi-check" size="20"
+                <VAvatar color="success" variant="tonal" size="36" rounded="lg" class="mr-3"
+                  ><VIcon icon="mdi-check" size="18"
                 /></VAvatar>
                 <div>
-                  <strong>{{ item.task?.title }}</strong
-                  ><span>{{
+                  <strong class="font-weight-semibold text-body-2">{{ item.task?.title }}</strong
+                  ><span class="text-caption text-medium-emphasis">{{
                     formatDate(item.completion.scheduled_date, {
                       weekday: "short",
                       day: "numeric",
@@ -524,13 +532,13 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                     })
                   }}</span>
                 </div>
-                <b>+{{ item.completion.earned_points }}</b>
+                <b class="text-body-2 font-weight-bold text-success ml-auto">+{{ item.completion.earned_points }}</b>
               </article>
             </div>
-            <div v-else class="empty-quest">
-              <VIcon icon="mdi-history" size="44" color="primary" />
-              <h3>ยังไม่มีประวัติ</h3>
-              <p>Quest ที่ทำเสร็จจะเรียงอยู่ที่นี่</p>
+            <div v-else class="empty-quest py-10">
+              <VIcon icon="mdi-history" size="44" color="primary" class="mb-2" />
+              <h3 class="text-h6 font-weight-bold">{{ $t('quests.noHistoryTitle') }}</h3>
+              <p class="text-body-2 text-medium-emphasis">{{ $t('quests.noHistorySubtitle') }}</p>
             </div>
           </section>
         </VWindowItem>
@@ -539,59 +547,67 @@ function frequencyLabel(occurrence: QuestOccurrence) {
   </PageState>
 
   <VDialog v-model="dialog" max-width="620" persistent>
-    <VCard>
-      <VCardTitle class="d-flex align-center justify-space-between px-5 pt-5">
-        <span>{{ form.id ? "แก้ไข Quest" : "สร้าง Quest" }}</span>
+    <VCard class="rounded-xl pa-6">
+      <VCardTitle class="d-flex align-center justify-space-between px-0 pt-0 pb-4">
+        <span class="text-h6 font-weight-bold">{{ form.id ? $t('quests.dialogEditTitle') : $t('quests.dialogCreateTitle') }}</span>
         <VBtn
           icon="mdi-close"
           variant="text"
-          aria-label="ปิด"
+          :aria-label="$t('common.cancel')"
           @click="dialog = false"
         />
       </VCardTitle>
-      <VCardText class="px-5">
+      <VCardText class="px-0 py-2">
         <VTextField
           v-model="form.title"
-          label="ชื่อ Quest"
+          :label="$t('quests.form.titleLabel')"
           maxlength="120"
           autofocus
+          class="mb-3"
+          rounded="lg"
         />
         <VTextarea
           v-model="form.description"
-          label="รายละเอียด (ไม่บังคับ)"
+          :label="$t('quests.form.descLabel')"
           rows="2"
           maxlength="1000"
+          class="mb-3"
+          rounded="lg"
         />
         <div class="form-grid">
           <VSelect
             v-model="form.frequency"
-            label="ทำซ้ำ"
+            :label="$t('quests.form.frequencyLabel')"
             :items="[
-              { title: 'ครั้งเดียว', value: 'once' },
-              { title: 'ทุกวัน', value: 'daily' },
-              { title: 'เลือกวันในสัปดาห์', value: 'weekly' },
+              { title: $t('quests.frequencies.once'), value: 'once' },
+              { title: $t('quests.frequencies.daily'), value: 'daily' },
+              { title: $t('quests.frequencies.weekly'), value: 'weekly' },
             ]"
+            rounded="lg"
           />
           <VTextField
             v-model="form.scheduledTime"
             type="time"
-            label="เวลา (ไม่บังคับ)"
+            :label="$t('quests.form.timeLabel')"
+            rounded="lg"
           />
           <VTextField
             v-model="form.startDate"
             type="date"
-            :label="form.frequency === 'once' ? 'วันที่ทำ' : 'วันเริ่ม'"
+            :label="form.frequency === 'once' ? $t('quests.form.dateDo') : $t('quests.form.dateStart')"
+            rounded="lg"
           />
           <VTextField
             v-if="form.frequency !== 'once'"
             v-model="form.endDate"
             type="date"
-            label="วันสิ้นสุด (ไม่บังคับ)"
+            :label="$t('quests.form.dateEnd')"
             :min="form.startDate"
+            rounded="lg"
           />
         </div>
-        <div v-if="form.frequency === 'weekly'" class="mb-5">
-          <p class="text-body-2 font-weight-medium mb-2">ทำในวัน</p>
+        <div v-if="form.frequency === 'weekly'" class="mb-4">
+          <p class="text-body-2 font-weight-medium mb-2">{{ $t('quests.form.daysLabel') }}</p>
           <div class="weekday-picker">
             <VBtn
               v-for="day in weekdays"
@@ -603,6 +619,7 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                 form.daysOfWeek.includes(day.value) ? 'primary' : 'secondary'
               "
               size="small"
+              class="rounded-lg"
               @click="
                 form.daysOfWeek = form.daysOfWeek.includes(day.value)
                   ? form.daysOfWeek.filter((value) => value !== day.value)
@@ -615,12 +632,13 @@ function frequencyLabel(occurrence: QuestOccurrence) {
         <div class="form-grid">
           <VSelect
             v-model="form.priority"
-            label="ความสำคัญ"
+            :label="$t('quests.form.priorityLabel')"
             :items="[
-              { title: 'เบา', value: 'low' },
-              { title: 'ปกติ', value: 'normal' },
-              { title: 'สำคัญ', value: 'high' },
+              { title: $t('quests.priorities.low'), value: 'low' },
+              { title: $t('quests.priorities.normal'), value: 'normal' },
+              { title: $t('quests.priorities.high'), value: 'high' },
             ]"
+            rounded="lg"
           />
           <VTextField
             v-model.number="form.points"
@@ -628,26 +646,28 @@ function frequencyLabel(occurrence: QuestOccurrence) {
             min="1"
             max="100"
             step="1"
-            label="คะแนน"
-            suffix="แต้ม"
+            :label="$t('quests.form.pointsLabel')"
+            :suffix="$t('quests.form.pointsSuffix')"
+            rounded="lg"
           />
         </div>
       </VCardText>
-      <VCardActions class="px-5 pb-5">
+      <VCardActions class="px-0 pb-0 pt-4">
         <VBtn
           v-if="form.id"
           color="error"
           variant="text"
+          class="text-none font-weight-medium rounded-lg"
           :disabled="pending"
           @click="removeQuest"
-          >ลบ</VBtn
+          >{{ $t('common.delete') }}</VBtn
         >
         <VSpacer />
-        <VBtn variant="text" :disabled="pending" @click="dialog = false"
-          >ยกเลิก</VBtn
+        <VBtn variant="text" class="text-none rounded-lg" :disabled="pending" @click="dialog = false"
+          >{{ $t('common.cancel') }}</VBtn
         >
-        <VBtn color="primary" :loading="pending" @click="submitQuest">{{
-          form.id ? "บันทึกการแก้ไข" : "สร้าง Quest"
+        <VBtn color="primary" class="text-none font-weight-medium rounded-lg px-5" :loading="pending" @click="submitQuest">{{
+          form.id ? $t('quests.saveEdit') : $t('quests.createQuest')
         }}</VBtn>
       </VCardActions>
     </VCard>
@@ -655,28 +675,14 @@ function frequencyLabel(occurrence: QuestOccurrence) {
 </template>
 
 <style scoped>
-.quests-page {
-  max-width: 1120px;
-  margin: 0 auto;
-}
-.quest-header,
-.section-heading,
-.calendar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
 .rhythm-board {
   display: grid;
   grid-template-columns: 150px 1fr 170px;
   align-items: center;
   gap: 24px;
-  padding: 22px 26px;
   color: white;
-  border-radius: 24px;
-  background: linear-gradient(115deg, #5d35b1, #7c4de2 58%, #9155fd);
-  box-shadow: 0 14px 32px rgba(93, 53, 177, 0.24);
+  background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 50%, #8b5cf6 100%);
+  box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.3) !important;
 }
 .score-block {
   display: grid;
@@ -686,12 +692,8 @@ function frequencyLabel(occurrence: QuestOccurrence) {
 }
 .score-block .score-kicker {
   grid-column: 1 / -1;
-  font-size: 0.72rem;
-  opacity: 0.78;
-}
-.score-block strong {
-  font-size: 3rem;
-  line-height: 1;
+  font-size: 0.75rem;
+  opacity: 0.8;
 }
 .week-trail {
   display: grid;
@@ -699,22 +701,20 @@ function frequencyLabel(occurrence: QuestOccurrence) {
   gap: 6px;
 }
 .trail-day {
-  min-width: 0;
-  padding: 7px 3px;
+  padding: 6px 3px;
   color: inherit;
   border: 1px solid transparent;
-  border-radius: 14px;
+  border-radius: 12px;
   background: transparent;
   cursor: pointer;
 }
 .trail-day:hover,
 .trail-day:focus-visible {
-  background: rgba(255, 255, 255, 0.1);
-  outline: 2px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.15);
 }
 .trail-day.today {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.32);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 .trail-day span,
 .trail-day b {
@@ -722,12 +722,12 @@ function frequencyLabel(occurrence: QuestOccurrence) {
   font-style: normal;
 }
 .trail-day span {
-  font-size: 0.68rem;
-  opacity: 0.72;
+  font-size: 0.7rem;
+  opacity: 0.8;
 }
 .trail-day b {
-  font-size: 1rem;
-  margin: 3px 0 7px;
+  font-size: 0.95rem;
+  margin: 2px 0 6px;
 }
 .trail-day i {
   display: block;
@@ -735,106 +735,47 @@ function frequencyLabel(occurrence: QuestOccurrence) {
   border-radius: 2px;
   background: linear-gradient(
     to right,
-    #c9ff8f var(--progress),
-    rgba(255, 255, 255, 0.18) var(--progress)
+    #34d399 var(--progress),
+    rgba(255, 255, 255, 0.2) var(--progress)
   );
-}
-.trail-day.complete i {
-  box-shadow: 0 0 8px rgba(201, 255, 143, 0.6);
 }
 .points-block {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 9px;
-}
-.points-block strong {
-  font-size: 1.35rem;
-}
-.points-block span {
-  display: block;
-  font-size: 0.72rem;
-  opacity: 0.72;
+  gap: 8px;
 }
 .quest-tabs {
-  border-bottom: 1px solid rgba(var(--v-border-color), 0.12);
-}
-.quest-panel {
-  padding: 24px;
-  border: 1px solid rgba(var(--v-border-color), 0.12);
-  border-radius: 20px;
-  background: rgb(var(--v-theme-surface));
-  box-shadow: 0 3px 14px rgba(58, 53, 65, 0.06);
-}
-.section-heading h2,
-.calendar-header h2 {
-  font-size: 1.15rem;
+  border-bottom: 1px solid rgba(var(--v-border-color), 0.15);
 }
 .completion-count {
-  padding: 6px 11px;
+  padding: 4px 12px;
   color: rgb(var(--v-theme-primary));
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 700;
   border-radius: 999px;
-  background: rgba(var(--v-theme-primary), 0.09);
-}
-.quest-list,
-.history-list {
-  margin-top: 16px;
+  background: rgba(var(--v-theme-primary), 0.1);
 }
 .quest-row {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 10px;
-  min-height: 68px;
-  padding: 7px 10px 7px 4px;
-  border-top: 1px solid rgba(var(--v-border-color), 0.09);
+  min-height: 64px;
+  padding: 6px 0;
+  border-top: 1px solid rgba(var(--v-border-color), 0.15);
 }
 .quest-row:first-child {
   border-top: 0;
 }
 .quest-row.done .quest-copy strong {
   text-decoration: line-through;
-  opacity: 0.55;
-}
-.quest-copy {
-  min-width: 0;
-}
-.quest-copy strong,
-.quest-copy span {
-  display: block;
-}
-.quest-copy strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.quest-copy span {
-  margin-top: 3px;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-  font-size: 0.75rem;
+  opacity: 0.5;
 }
 .quest-points {
   color: rgb(var(--v-theme-primary));
   font-size: 0.78rem;
   font-weight: 700;
-}
-.empty-quest {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 52px 16px 40px;
-  text-align: center;
-}
-.empty-quest h3 {
-  margin-top: 4px;
-}
-.empty-quest p {
-  margin-bottom: 8px;
-  color: rgba(var(--v-theme-on-surface), 0.62);
-  font-size: 0.88rem;
 }
 .calendar-layout {
   display: grid;
@@ -842,33 +783,27 @@ function frequencyLabel(occurrence: QuestOccurrence) {
   gap: 18px;
 }
 .calendar-header {
-  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
 }
-.calendar-weekdays {
-  margin-bottom: 6px;
-  text-align: center;
-  color: rgba(var(--v-theme-on-surface), 0.55);
-  font-size: 0.72rem;
-}
 .calendar-day {
   aspect-ratio: 1;
-  min-width: 0;
   padding: 6px;
   border: 1px solid transparent;
-  border-radius: 14px;
+  border-radius: 12px;
   color: inherit;
-  background: rgba(var(--v-theme-primary), 0.025);
+  background: rgba(var(--v-theme-primary), 0.03);
   cursor: pointer;
 }
 .calendar-day:hover,
 .calendar-day:focus-visible {
-  border-color: rgba(var(--v-theme-primary), 0.45);
-  outline: none;
+  border-color: rgba(var(--v-theme-primary), 0.4);
 }
 .calendar-day.selected {
   color: white;
@@ -878,62 +813,25 @@ function frequencyLabel(occurrence: QuestOccurrence) {
   border-color: rgb(var(--v-theme-primary));
   color: rgb(var(--v-theme-primary));
 }
-.calendar-day b,
-.calendar-day span {
-  display: block;
-}
-.calendar-day span {
-  margin-top: 4px;
-  font-size: 0.62rem;
-  opacity: 0.72;
-}
-.agenda-list {
-  margin-top: 14px;
-}
 .agenda-row {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
-  gap: 9px;
   width: 100%;
-  padding: 11px 2px;
+  padding: 10px 0;
   border: 0;
-  border-top: 1px solid rgba(var(--v-border-color), 0.09);
+  border-top: 1px solid rgba(var(--v-border-color), 0.15);
   color: inherit;
   text-align: left;
   background: none;
   cursor: pointer;
 }
-.agenda-row:hover span,
-.agenda-row:focus-visible span {
-  color: rgb(var(--v-theme-primary));
-}
-.agenda-row small {
-  color: rgb(var(--v-theme-primary));
-  font-weight: 700;
-}
 .history-row {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-top: 1px solid rgba(var(--v-border-color), 0.09);
+  border-top: 1px solid rgba(var(--v-border-color), 0.15);
 }
 .history-row:first-child {
   border-top: 0;
-}
-.history-row strong,
-.history-row span {
-  display: block;
-}
-.history-row span {
-  margin-top: 2px;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-  font-size: 0.75rem;
-}
-.history-row > b {
-  color: rgb(var(--v-theme-success));
 }
 .form-grid {
   display: grid;
@@ -943,70 +841,6 @@ function frequencyLabel(occurrence: QuestOccurrence) {
 .weekday-picker {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 7px;
-}
-@media (max-width: 760px) {
-  .quest-header {
-    align-items: flex-end;
-  }
-  .rhythm-board {
-    grid-template-columns: 1fr auto;
-    padding: 20px 16px;
-  }
-  .week-trail {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
-  .points-block {
-    align-self: center;
-  }
-  .calendar-layout {
-    grid-template-columns: 1fr;
-  }
-}
-@media (max-width: 460px) {
-  .quest-header {
-    align-items: stretch;
-    flex-direction: column;
-  }
-  .quest-header .v-btn {
-    align-self: flex-start;
-  }
-  .rhythm-board {
-    gap: 14px;
-    border-radius: 18px;
-  }
-  .score-block strong {
-    font-size: 2.45rem;
-  }
-  .points-block strong {
-    font-size: 1.1rem;
-  }
-  .trail-day {
-    padding-inline: 1px;
-  }
-  .quest-panel {
-    padding: 18px 14px;
-    border-radius: 16px;
-  }
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-  .weekday-picker {
-    gap: 4px;
-  }
-  .weekday-picker .v-btn {
-    min-width: 0;
-    padding: 0;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    transition: none !important;
-  }
+  gap: 6px;
 }
 </style>

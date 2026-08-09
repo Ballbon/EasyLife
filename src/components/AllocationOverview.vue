@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
 
 import { formatSatang } from "@/lib/money";
 import type {
@@ -8,6 +9,7 @@ import type {
 } from "@/lib/plan-calculations";
 import { formatReportMonth } from "@/lib/reports";
 
+const { t } = useI18n();
 const props = defineProps<{
   overview: AllocationOverviewData;
   month: string;
@@ -55,7 +57,7 @@ const slices = computed(() => {
     result.push({
       item: {
         id: "unallocated",
-        name: "ยังไม่จัดสรร",
+        name: t("plans.allocations.unallocated"),
         type: "fixed" as const,
         percentageOfIncome: ratio * 100,
         plannedSatang: props.overview.unallocatedSatang,
@@ -123,13 +125,13 @@ const activeSlice = computed(() => {
 function statusChipProps(status: AllocationOverviewItem["status"]) {
   switch (status) {
     case "over":
-      return { color: "error", label: "เกินงบ" };
+      return { color: "error", label: t("plans.budgets.overBudget") };
     case "near":
-      return { color: "warning", label: "ใกล้เต็ม" };
+      return { color: "warning", label: t("plans.budgets.overBudget") };
     case "safe":
-      return { color: "success", label: "ตามแผน" };
+      return { color: "success", label: t("plans.budgets.remaining") };
     default:
-      return { color: "secondary", label: "ยังไม่ใช้" };
+      return { color: "secondary", label: t("plans.budgets.remaining") };
   }
 }
 
@@ -145,14 +147,14 @@ function progressColor(item: AllocationOverviewItem) {
     <div class="d-flex flex-wrap align-center justify-space-between ga-3 mb-6">
       <div>
         <div class="d-flex align-center ga-2 mb-1">
-          <p class="text-overline text-primary mb-0">Money Allocation Map</p>
+          <p class="text-overline text-primary mb-0">{{ $t('plans.tagline') }}</p>
           <VChip size="x-small" color="primary" variant="tonal">
             {{ formatReportMonth(month) }}
           </VChip>
         </div>
         <h2 class="text-h6 font-weight-semibold d-flex align-center ga-2">
           <VIcon icon="mdi-chart-donut" color="primary" size="24" />
-          วางเงินก่อนใช้จริง
+          {{ $t('components.allocationOverview.title') }}
         </h2>
       </div>
 
@@ -163,7 +165,7 @@ function progressColor(item: AllocationOverviewItem) {
         size="small"
         append-icon="mdi-arrow-right"
       >
-        {{ overview.hasPlan ? "ปรับแผนจัดสรรเงิน" : "ตั้งงบวางเงิน" }}
+        {{ overview.hasPlan ? $t('plans.title') : $t('plans.budgets.setFirstBudget') }}
       </VBtn>
     </div>
 
@@ -172,7 +174,7 @@ function progressColor(item: AllocationOverviewItem) {
       <!-- CIRCULAR DONUT CHART COLUMN -->
       <div class="donut-section">
         <div class="donut-chart-wrapper">
-          <svg viewBox="0 0 200 200" class="donut-svg" aria-label="แผนภาพวงกลมจัดสรรเงิน">
+          <svg viewBox="0 0 200 200" class="donut-svg" aria-label="Donut chart">
             <g v-for="slice in slices" :key="slice.index">
               <path
                 :d="getArcPath(slice.startAngle, slice.endAngle, hoveredIndex === slice.index ? 93 : 88)"
@@ -194,12 +196,12 @@ function progressColor(item: AllocationOverviewItem) {
                   activeSlice
                     ? activeSlice.item.name
                     : overview.hasPlan
-                      ? "รายได้คาดการณ์"
-                      : "วงเงินรวม"
+                      ? $t('plans.allocations.expectedIncomeLabel')
+                      : $t('plans.budgets.amountLabel')
                 }}
               </text>
               <text v-if="activeSlice" x="100" y="127" class="center-subtext text-anchor-middle">
-                {{ activeSlice.percentage.toFixed(1) }}% ของรายได้
+                {{ activeSlice.percentage.toFixed(1) }}%
               </text>
             </g>
           </svg>
@@ -227,7 +229,7 @@ function progressColor(item: AllocationOverviewItem) {
         <!-- STATS SUMMARY HEADER -->
         <div class="allocation-stats-bar pa-4 mb-4 rounded-lg">
           <div class="d-flex justify-space-between align-center text-body-2 mb-2">
-            <span class="text-medium-emphasis">สัดส่วนเงินจัดสรรแล้ว</span>
+            <span class="text-medium-emphasis">{{ $t('plans.allocations.itemsTitle') }}</span>
             <strong class="text-primary font-weight-semibold">
               {{ overview.allocatedRatio.toFixed(1) }}%
             </strong>
@@ -242,13 +244,10 @@ function progressColor(item: AllocationOverviewItem) {
 
           <div class="d-flex justify-space-between mt-3 text-caption text-medium-emphasis">
             <span>
-              จัดสรรแล้ว:
-              <strong class="text-high-emphasis">
-                {{ formatSatang(overview.totalAllocatedSatang) }}
-              </strong>
+              {{ $t('plans.allocations.allocated', { amount: formatSatang(overview.totalAllocatedSatang) }) }}
             </span>
             <span v-if="overview.unallocatedSatang > 0">
-              ยังไม่จัดสรร:
+              {{ $t('plans.allocations.unallocated') }}:
               <strong class="text-warning">
                 {{ formatSatang(overview.unallocatedSatang) }}
               </strong>
@@ -291,7 +290,7 @@ function progressColor(item: AllocationOverviewItem) {
 
             <div class="d-flex justify-space-between align-center text-caption text-medium-emphasis">
               <span>
-                ใช้ไป {{ formatSatang(item.actualSatang) }} / ตั้งไว้ {{ formatSatang(item.plannedSatang) }}
+                {{ formatSatang(item.actualSatang) }} / {{ formatSatang(item.plannedSatang) }}
               </span>
               <strong :class="item.status === 'over' ? 'text-error' : 'text-high-emphasis'">
                 {{ item.spendingPercentage.toFixed(0) }}%
@@ -332,18 +331,15 @@ function progressColor(item: AllocationOverviewItem) {
       </div>
 
       <h3 class="text-h6 font-weight-semibold mb-2">
-        ยังไม่ได้วางเงินก่อนใช้จริงในเดือนนี้
+        {{ $t('plans.budgets.emptyTitle') }}
       </h3>
       <p class="text-body-2 text-medium-emphasis mx-auto mb-5 max-w-md">
-        การแบ่งรายได้ตามเจตนา (Needs, Savings, Wants) ช่วยให้คุณรู้ขอบเขตการใช้เงินล่วงหน้าก่อนที่เงินจะถูกจ่ายออกไป
+        {{ $t('plans.budgets.emptySubtitle') }}
       </p>
 
       <div class="d-flex flex-wrap justify-center ga-3">
         <VBtn to="/plans" color="primary" prepend-icon="mdi-plus">
-          เริ่มวางแผนแบ่งรายได้
-        </VBtn>
-        <VBtn to="/plans" variant="outlined" color="primary" prepend-icon="mdi-wallet-plus-outline">
-          ตั้งงบรายหมวด
+          {{ $t('plans.budgets.setFirstBudget') }}
         </VBtn>
       </div>
     </div>
