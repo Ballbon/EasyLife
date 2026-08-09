@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import QuickAddDialog from "@/components/transactions/QuickAddDialog.vue";
 import PWAInstallPrompt from "@/components/ui/PWAInstallPrompt.vue";
 import { useNetworkStatus } from "@/composables/useNetworkStatus";
+import { useThemeMode } from "@/composables/useThemeMode";
 
 const route = useRoute();
 const router = useRouter();
@@ -18,6 +19,7 @@ const isHovering = ref(false);
 const showQuickAdd = ref(false);
 const { goBack } = useAppNavigation();
 const { isOnline } = useNetworkStatus();
+const { mode, toggleMode } = useThemeMode();
 
 const isExpanded = computed(
   () => isPinned.value || isHovering.value || !mdAndUp.value,
@@ -184,6 +186,25 @@ async function logout() {
       route.meta.title
     }}</VAppBarTitle>
     <template #append>
+      <VBtn
+        icon
+        variant="text"
+        size="small"
+        class="mr-2"
+        :aria-label="`เปลี่ยนธีม (${mode})`"
+        :title="`ธีมปัจจุบัน: ${mode === 'system' ? 'ตามระบบ' : mode === 'dark' ? 'มืด' : 'สว่าง'}`"
+        @click="toggleMode"
+      >
+        <VIcon
+          :icon="
+            mode === 'dark'
+              ? 'mdi-weather-night'
+              : mode === 'light'
+                ? 'mdi-weather-sunny'
+                : 'mdi-desktop-tower-monitor'
+          "
+        />
+      </VBtn>
       <VBtn
         color="primary"
         variant="tonal"

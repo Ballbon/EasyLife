@@ -25,6 +25,27 @@ export const vuetify = createVuetify({
           "medium-emphasis-opacity": 0.68,
         },
       },
+      materioDark: {
+        dark: true,
+        colors: {
+          background: "#28243D",
+          surface: "#312D4B",
+          primary: "#9155FD",
+          secondary: "#8A8D93",
+          success: "#56CA00",
+          info: "#16B1FF",
+          warning: "#FFB400",
+          error: "#FF4C51",
+          "on-background": "#E7E3FC",
+          "on-surface": "#E7E3FC",
+        },
+        variables: {
+          "border-color": "#E7E3FC",
+          "border-opacity": 0.12,
+          "high-emphasis-opacity": 0.87,
+          "medium-emphasis-opacity": 0.68,
+        },
+      },
     },
   },
   defaults: {
