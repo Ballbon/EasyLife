@@ -1,3 +1,5 @@
+import { i18n } from "@/i18n";
+
 export const transactionTypes = ["expense", "income", "transfer"] as const;
 export type TransactionType = (typeof transactionTypes)[number];
 
@@ -42,7 +44,8 @@ export function isoToBangkokLocalInput(value: string): string {
 }
 
 export function formatBangkokDateTime(value: string): string {
-  return new Intl.DateTimeFormat("th-TH", {
+  const localeStr = i18n.global.locale.value === "th" ? "th-TH" : "en-US";
+  return new Intl.DateTimeFormat(localeStr, {
     timeZone: "Asia/Bangkok",
     dateStyle: "medium",
     timeStyle: "short",

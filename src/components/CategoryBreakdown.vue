@@ -2,41 +2,51 @@
 import { formatSatang } from "@/lib/money";
 import type { CategoryTotal } from "@/lib/reports";
 
-defineProps<{ categories: CategoryTotal[] }>();
+defineProps<{
+  title?: string;
+  items?: CategoryTotal[];
+  totalSatang?: number;
+  emptyText?: string;
+  categories?: CategoryTotal[];
+}>();
 </script>
 
 <template>
-  <div v-if="categories.length" class="category-list">
-    <div v-for="category in categories" :key="category.id" class="category-row">
-      <div class="d-flex align-center ga-3 min-width-0">
-        <span
-          class="category-mark"
-          :style="{ backgroundColor: category.color }"
-        ></span>
-        <div class="min-width-0">
-          <p class="font-weight-medium text-truncate">{{ category.name }}</p>
-          <div class="progress-track mt-2">
-            <span
-              :style="{
-                width: `${Math.max(category.percentage, 2)}%`,
-                backgroundColor: category.color,
-              }"
-            ></span>
+  <VCard class="materio-card pa-6 rounded-xl">
+    <h2 v-if="title" class="text-subtitle-1 font-weight-bold mb-4">{{ title }}</h2>
+
+    <div v-if="(items || categories || []).length" class="category-list">
+      <div v-for="category in (items || categories || [])" :key="category.id" class="category-row">
+        <div class="d-flex align-center ga-3 min-width-0">
+          <span
+            class="category-mark"
+            :style="{ backgroundColor: category.color }"
+          ></span>
+          <div class="min-width-0">
+            <p class="font-weight-medium text-truncate mb-0">{{ category.name }}</p>
+            <div class="progress-track mt-2">
+              <span
+                :style="{
+                  width: `${Math.max(category.percentage, 2)}%`,
+                  backgroundColor: category.color,
+                }"
+              ></span>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="text-right">
-        <p class="font-weight-semibold">{{ formatSatang(category.amount) }}</p>
-        <p class="text-caption text-medium-emphasis">
-          {{ category.percentage.toFixed(1) }}%
-        </p>
+        <div class="text-right">
+          <p class="font-weight-semibold mb-0">{{ formatSatang(category.amount) }}</p>
+          <p class="text-caption text-medium-emphasis mb-0">
+            {{ category.percentage.toFixed(1) }}%
+          </p>
+        </div>
       </div>
     </div>
-  </div>
-  <div v-else class="empty-breakdown text-center text-medium-emphasis">
-    <VIcon icon="mdi-chart-donut-variant" size="38" class="mb-2" />
-    <p>ยังไม่มีรายจ่ายในเดือนนี้</p>
-  </div>
+    <div v-else class="empty-breakdown text-center text-medium-emphasis py-8">
+      <VIcon icon="mdi-chart-donut-variant" size="38" class="mb-2" />
+      <p class="mb-0">{{ emptyText ? $t(emptyText) : $t("reports.breakdown.emptyExpense") }}</p>
+    </div>
+  </VCard>
 </template>
 
 <style scoped>

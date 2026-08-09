@@ -14,20 +14,22 @@ const currentLocale = computed({
 
 function toggleLocale() {
   const nextLocale = currentLocale.value === 'th' ? 'en' : 'th'
+  locale.value = nextLocale
   setLocale(nextLocale)
 }
 </script>
 
 <template>
-  <v-btn
+  <VBtn
     variant="text"
     density="comfortable"
     icon
-    @click="toggleLocale"
+    aria-label="เปลี่ยนภาษา"
     title="Change Language / เปลี่ยนภาษา"
+    @click="toggleLocale"
   >
     <span class="text-subtitle-2 font-weight-bold">
       {{ currentLocale.toUpperCase() }}
     </span>
-  </v-btn>
+  </VBtn>
 </template>

@@ -18,9 +18,9 @@ function retryConnection() {
     <VCard class="materio-card pa-6 text-center" max-width="500">
       <EmptyState
         icon="mdi-wifi-off"
-        title="ไม่มีการเชื่อมต่ออินเทอร์เน็ต"
-        description="ไม่พบสัญญาณอินเทอร์เน็ต แอปพลิเคชันยังคงทำงานในโหมดออฟไลน์ด้วยข้อมูลที่แคชไว้ในเครื่อง"
-        action-text="ลองเชื่อมต่ออีกครั้ง"
+        :title="$t('offline.title')"
+        :description="$t('offline.subtitle')"
+        :action-text="$t('offline.retry')"
         action-icon="mdi-refresh"
         @action="retryConnection"
       />

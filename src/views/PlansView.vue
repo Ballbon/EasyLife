@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 
 import PageState from "@/components/PageState.vue";
 import { formatSatang } from "@/lib/money";
@@ -28,6 +29,7 @@ import {
 } from "@/lib/reports";
 import type { FinancialGoal } from "@/types/finance";
 
+const { t, locale } = useI18n();
 const loading = ref(true);
 const pending = ref(false);
 const error = ref("");
@@ -105,7 +107,7 @@ async function loadData() {
   try {
     await refresh();
   } catch {
-    error.value = "โหลดแผนการเงินไม่สำเร็จ กรุณาลองใหม่";
+    error.value = t("plans.messages.loadError");
   } finally {
     loading.value = false;
   }
@@ -165,7 +167,7 @@ function openBudget(status: (typeof statuses.value)[number]) {
 }
 
 async function submitBudget() {
-  if (!budgetForm.categoryId) return void (error.value = "กรุณาเลือกหมวดหมู่");
+  if (!budgetForm.categoryId) return void (error.value = t("plans.messages.selectCategory"));
   await runAction(async () => {
     await saveBudget(
       selectedMonth.value,
@@ -174,17 +176,17 @@ async function submitBudget() {
     );
     budgetDialog.value = false;
     success.value = editingBudgetId.value
-      ? "ปรับวงเงินแล้ว"
-      : "เพิ่มงบประมาณแล้ว";
+      ? t("plans.messages.budgetUpdated")
+      : t("plans.messages.budgetAdded");
   });
 }
 
 async function removeBudget(id: string) {
-  if (!window.confirm("ลบงบหมวดนี้ออกจากเดือนที่เลือก?")) return;
+  if (!window.confirm(t("plans.messages.confirmDeleteBudget"))) return;
   await runAction(async () => {
     await deleteBudget(id);
     budgetDialog.value = false;
-    success.value = "ลบงบประมาณแล้ว";
+    success.value = t("plans.messages.budgetDeleted");
   });
 }
 
@@ -192,8 +194,8 @@ async function copyBudgets() {
   await runAction(async () => {
     const count = await copyPreviousBudgets(selectedMonth.value);
     success.value = count
-      ? `คัดลอกงบจากเดือนก่อนแล้ว ${count} หมวด`
-      : "เดือนก่อนไม่มีงบให้คัดลอก";
+      ? t("plans.messages.budgetsCopied", { count })
+      : t("plans.messages.noBudgetsToCopy");
   });
 }
 
@@ -233,7 +235,7 @@ async function submitPlan() {
       expectedIncome.value,
       allocationDrafts.value,
     );
-    success.value = "บันทึกแผนจัดสรรแล้ว";
+    success.value = t("plans.messages.planSaved");
   });
 }
 
@@ -265,16 +267,16 @@ async function submitGoal() {
   await runAction(async () => {
     await saveGoal({ ...goalForm, id: goalForm.id || undefined });
     goalDialog.value = false;
-    success.value = goalForm.id ? "อัปเดตเป้าหมายแล้ว" : "สร้างเป้าหมายแล้ว";
+    success.value = goalForm.id ? t("plans.messages.goalUpdated") : t("plans.messages.goalCreated");
   });
 }
 
 async function removeGoal(id: string) {
-  if (!window.confirm("ลบเป้าหมายนี้?")) return;
+  if (!window.confirm(t("plans.messages.confirmDeleteGoal"))) return;
   await runAction(async () => {
     await deleteGoal(id);
     goalDialog.value = false;
-    success.value = "ลบเป้าหมายแล้ว";
+    success.value = t("plans.messages.goalDeleted");
   });
 }
 
@@ -287,7 +289,7 @@ async function runAction(action: () => Promise<void>) {
     await refresh();
   } catch (caught) {
     error.value =
-      caught instanceof Error ? caught.message : "บันทึกไม่สำเร็จ กรุณาลองใหม่";
+      caught instanceof Error ? caught.message : t("plans.messages.saveError");
   } finally {
     pending.value = false;
   }
@@ -304,6 +306,13 @@ function goalProgress(goal: FinancialGoal) {
       100,
   );
 }
+
+function formatTargetDate(dateStr: string) {
+  const loc = locale.value === "th" ? "th-TH" : "en-US";
+  return new Intl.DateTimeFormat(loc, { dateStyle: "medium" }).format(
+    new Date(`${dateStr}T00:00:00+07:00`),
+  );
+}
 </script>
 
 <template>
@@ -311,42 +320,39 @@ function goalProgress(goal: FinancialGoal) {
     <div v-if="data" class="plans-page">
       <header class="d-flex flex-wrap align-center justify-space-between ga-4 mb-6">
         <div>
-          <p class="text-caption font-weight-medium text-disabled mb-1">Money map</p>
-          <h1 class="page-title mb-0">วางเงินก่อนใช้จริง</h1>
+          <p class="text-caption font-weight-medium text-disabled mb-1">{{ $t('plans.tagline') }}</p>
+          <h1 class="page-title mb-0">{{ $t('plans.title') }}</h1>
           <p class="text-body-2 text-medium-emphasis mt-1 mb-0">
-            กำหนดขอบเขต แบ่งรายได้ และค่อย ๆ ไปถึงเป้าหมายการเงิน
+            {{ $t('plans.subtitle') }}
           </p>
         </div>
         <div
           v-if="tab !== 'goals'"
           class="month-control"
-          aria-label="เลือกเดือน"
+          aria-label="Month"
         >
           <VBtn
             icon="mdi-chevron-left"
             variant="text"
             size="small"
-            aria-label="เดือนก่อนหน้า"
             @click="moveMonth(-1)"
           />
           <label>
-            <span class="sr-only">เดือนที่วางแผน</span>
             <input v-model="selectedMonth" type="month" />
           </label>
           <VBtn
             icon="mdi-chevron-right"
             variant="text"
             size="small"
-            aria-label="เดือนถัดไป"
             @click="moveMonth(1)"
           />
         </div>
       </header>
 
       <VTabs v-model="tab" color="primary" class="plans-tabs mb-6" show-arrows>
-        <VTab value="budgets" prepend-icon="mdi-gauge" class="text-none font-weight-semibold">งบรายหมวด</VTab>
-        <VTab value="plan" prepend-icon="mdi-chart-donut" class="text-none font-weight-semibold">แบ่งรายได้</VTab>
-        <VTab value="goals" prepend-icon="mdi-flag-checkered" class="text-none font-weight-semibold">เป้าหมาย</VTab>
+        <VTab value="budgets" prepend-icon="mdi-gauge" class="text-none font-weight-semibold">{{ $t('plans.tabs.budgets') }}</VTab>
+        <VTab value="plan" prepend-icon="mdi-chart-donut" class="text-none font-weight-semibold">{{ $t('plans.tabs.plan') }}</VTab>
+        <VTab value="goals" prepend-icon="mdi-flag-checkered" class="text-none font-weight-semibold">{{ $t('plans.tabs.goals') }}</VTab>
       </VTabs>
 
       <VAlert
@@ -373,13 +379,13 @@ function goalProgress(goal: FinancialGoal) {
           <div class="budget-hero-grid">
             <div>
               <p class="hero-label mb-1">
-                งบคงเหลือ · {{ formatReportMonth(selectedMonth) }}
+                {{ $t('plans.hero.remaining', { month: formatReportMonth(selectedMonth) }) }}
               </p>
               <p class="hero-amount my-2">
                 {{ formatSatang(budgetTotal - actualTotal) }}
               </p>
               <p class="hero-note mb-0">
-                ใช้แล้ว {{ formatSatang(actualTotal) }} จาก {{ formatSatang(budgetTotal) }}
+                {{ $t('plans.hero.spent', { spent: formatSatang(actualTotal), total: formatSatang(budgetTotal) }) }}
               </p>
             </div>
             <div class="budget-actions">
@@ -388,7 +394,7 @@ function goalProgress(goal: FinancialGoal) {
                 prepend-icon="mdi-content-copy"
                 class="text-none font-weight-medium rounded-lg"
                 @click="copyBudgets"
-                >คัดลอกเดือนก่อน</VBtn
+                >{{ $t('plans.hero.copyPrevious') }}</VBtn
               >
               <VBtn
                 color="white"
@@ -396,7 +402,7 @@ function goalProgress(goal: FinancialGoal) {
                 class="text-none font-weight-medium rounded-lg"
                 :disabled="!availableCategories.length"
                 @click="openNewBudget"
-                >เพิ่มงบ</VBtn
+                >{{ $t('plans.hero.addBudget') }}</VBtn
               >
             </div>
           </div>
@@ -426,7 +432,7 @@ function goalProgress(goal: FinancialGoal) {
                 <div>
                   <p class="font-weight-bold text-body-2 mb-0">{{ status.category.name }}</p>
                   <p class="text-caption text-medium-emphasis mb-0 mt-1">
-                    ใช้แล้ว {{ formatSatang(status.actualSatang) }}
+                    {{ $t('plans.budgets.spent', { amount: formatSatang(status.actualSatang) }) }}
                   </p>
                 </div>
               </div>
@@ -438,7 +444,7 @@ function goalProgress(goal: FinancialGoal) {
               >
                 {{
                   status.state === "over"
-                    ? "เกินงบ"
+                    ? $t('plans.budgets.overBudget')
                     : `${Math.round(status.percentage)}%`
                 }}
               </VChip>
@@ -453,7 +459,7 @@ function goalProgress(goal: FinancialGoal) {
             />
             <div class="d-flex justify-space-between text-body-2">
               <span class="text-medium-emphasis">{{
-                status.state === "over" ? "เกินมา" : "เหลือใช้"
+                status.state === "over" ? $t('plans.budgets.overBy') : $t('plans.budgets.remaining')
               }}</span>
               <strong :class="status.state === 'over' ? 'text-error' : ''">{{
                 formatSatang(Math.abs(status.remainingSatang))
@@ -466,10 +472,10 @@ function goalProgress(goal: FinancialGoal) {
             ><VIcon icon="mdi-wallet-plus-outline" size="32" color="primary"
           /></VAvatar>
           <h2 class="text-h6 font-weight-bold">
-            เดือนนี้ยังไม่มีขอบเขตการใช้เงิน
+            {{ $t('plans.budgets.emptyTitle') }}
           </h2>
           <p class="text-body-2 text-medium-emphasis mt-1 mb-6">
-            เริ่มจากหมวดที่ใช้บ่อยที่สุด แล้วค่อยเพิ่มหมวดอื่น
+            {{ $t('plans.budgets.emptySubtitle') }}
           </p>
           <VBtn
             color="primary"
@@ -477,7 +483,7 @@ function goalProgress(goal: FinancialGoal) {
             class="text-none font-weight-medium rounded-lg px-6"
             :disabled="!availableCategories.length"
             @click="openNewBudget"
-            >ตั้งงบหมวดแรก</VBtn
+            >{{ $t('plans.budgets.setFirstBudget') }}</VBtn
           >
         </VCard>
       </section>
@@ -485,13 +491,13 @@ function goalProgress(goal: FinancialGoal) {
       <section v-else-if="tab === 'plan'" class="plan-layout">
         <div>
           <VCard class="materio-card pa-6 rounded-xl mb-5">
-            <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">รายได้ตั้งต้น</p>
+            <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">{{ $t('plans.allocations.incomeTagline') }}</p>
             <h2 class="text-subtitle-1 font-weight-bold mb-4">
-              เดือนนี้มีเงินให้วางแผนเท่าไร
+              {{ $t('plans.allocations.incomeTitle') }}
             </h2>
             <VTextField
               v-model="expectedIncome"
-              label="รายได้คาดการณ์"
+              :label="$t('plans.allocations.expectedIncomeLabel')"
               prefix="฿"
               inputmode="decimal"
               hide-details
@@ -502,8 +508,8 @@ function goalProgress(goal: FinancialGoal) {
           <VCard class="materio-card pa-6 rounded-xl">
             <div class="d-flex justify-space-between align-center ga-4 mb-5">
               <div>
-                <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">รายการจัดสรร</p>
-                <h2 class="text-subtitle-1 font-weight-bold mb-0">แบ่งเงินตามเจตนา</h2>
+                <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">{{ $t('plans.allocations.itemsTagline') }}</p>
+                <h2 class="text-subtitle-1 font-weight-bold mb-0">{{ $t('plans.allocations.itemsTitle') }}</h2>
               </div>
               <VBtn
                 variant="tonal"
@@ -511,7 +517,7 @@ function goalProgress(goal: FinancialGoal) {
                 prepend-icon="mdi-plus"
                 class="text-none font-weight-medium rounded-lg"
                 @click="addAllocation"
-                >เพิ่มรายการ</VBtn
+                >{{ $t('plans.allocations.addItem') }}</VBtn
               >
             </div>
             <div v-if="allocationDrafts.length" class="allocation-list">
@@ -525,16 +531,16 @@ function goalProgress(goal: FinancialGoal) {
                 }}</span>
                 <VTextField
                   v-model="item.name"
-                  label="ชื่อรายการ"
+                  :label="$t('plans.allocations.itemName')"
                   hide-details
                   rounded="lg"
                 />
                 <VSelect
                   v-model="item.type"
-                  label="รูปแบบ"
+                  :label="$t('plans.allocations.type')"
                   :items="[
-                    { title: 'เปอร์เซ็นต์', value: 'percentage' },
-                    { title: 'จำนวนคงที่', value: 'fixed' },
+                    { title: $t('plans.allocations.percentage'), value: 'percentage' },
+                    { title: $t('plans.allocations.fixed'), value: 'fixed' },
                   ]"
                   hide-details
                   rounded="lg"
@@ -542,7 +548,7 @@ function goalProgress(goal: FinancialGoal) {
                 <VTextField
                   v-model="item.value"
                   :label="
-                    item.type === 'percentage' ? 'เปอร์เซ็นต์' : 'จำนวนเงิน'
+                    item.type === 'percentage' ? $t('plans.allocations.percentage') : $t('plans.allocations.amount')
                   "
                   :suffix="item.type === 'percentage' ? '%' : undefined"
                   :prefix="item.type === 'fixed' ? '฿' : undefined"
@@ -552,7 +558,7 @@ function goalProgress(goal: FinancialGoal) {
                 />
                 <VSelect
                   v-model="item.categoryId"
-                  label="ผูกหมวด (ถ้ามี)"
+                  :label="$t('plans.allocations.linkCategory')"
                   :items="data.categories"
                   item-title="name"
                   item-value="id"
@@ -561,7 +567,7 @@ function goalProgress(goal: FinancialGoal) {
                   rounded="lg"
                 />
                 <div class="allocation-preview">
-                  <span>คิดเป็น</span
+                  <span>{{ $t('plans.allocations.equals') }}</span
                   ><strong>{{ formatSatang(allocationPreview(item)) }}</strong>
                 </div>
                 <VBtn
@@ -569,14 +575,13 @@ function goalProgress(goal: FinancialGoal) {
                   variant="text"
                   color="secondary"
                   size="small"
-                  :aria-label="`ลบรายการ ${index + 1}`"
                   @click="allocationDrafts.splice(index, 1)"
                 />
               </div>
             </div>
             <div v-else class="plan-empty">
               <VIcon icon="mdi-vector-line" /><span
-                >ยังไม่มีรายการจัดสรร เพิ่มรายการแรกเพื่อเริ่มแบ่งเงิน</span
+                >{{ $t('plans.allocations.empty') }}</span
               >
             </div>
           </VCard>
@@ -584,7 +589,7 @@ function goalProgress(goal: FinancialGoal) {
 
         <aside>
           <VCard class="allocation-meter pa-6 rounded-xl">
-            <p class="meter-label mb-1">เงินที่ยังไม่จัดสรร</p>
+            <p class="meter-label mb-1">{{ $t('plans.allocations.unallocated') }}</p>
             <p class="meter-value my-2">{{ formatSatang(unallocated) }}</p>
             <div
               class="meter-track mt-6"
@@ -596,16 +601,16 @@ function goalProgress(goal: FinancialGoal) {
               <span :style="{ width: `${allocationRatio}%` }" />
             </div>
             <div class="d-flex justify-space-between mt-3 text-caption">
-              <span>จัดแล้ว {{ formatSatang(planValidation.totalSatang) }}</span
+              <span>{{ $t('plans.allocations.allocated', { amount: formatSatang(planValidation.totalSatang) }) }}</span
               ><span>{{ allocationRatio.toFixed(1) }}%</span>
             </div>
             <VDivider class="my-5 border-opacity-50" />
             <div class="meter-stat">
-              <span>เปอร์เซ็นต์รวม</span
+              <span>{{ $t('plans.allocations.totalPercentage') }}</span
               ><strong>{{ planValidation.percentageTotal.toFixed(2) }}%</strong>
             </div>
             <div class="meter-stat mt-3">
-              <span>จำนวนรายการ</span
+              <span>{{ $t('plans.allocations.totalItems') }}</span
               ><strong>{{ allocationDrafts.length }}</strong>
             </div>
             <VAlert
@@ -623,7 +628,7 @@ function goalProgress(goal: FinancialGoal) {
               :loading="pending"
               :disabled="Boolean(planValidation.error)"
               @click="submitPlan"
-              >บันทึกแผนเดือนนี้</VBtn
+              >{{ $t('plans.allocations.savePlan') }}</VBtn
             >
           </VCard>
         </aside>
@@ -632,11 +637,11 @@ function goalProgress(goal: FinancialGoal) {
       <section v-else>
         <div class="d-flex justify-space-between align-center ga-4 mb-6">
           <div>
-            <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">Future funds</p>
-            <h2 class="text-subtitle-1 font-weight-bold mb-0">เงินก้อนที่กำลังสร้าง</h2>
+            <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">{{ $t('plans.goals.tagline') }}</p>
+            <h2 class="text-subtitle-1 font-weight-bold mb-0">{{ $t('plans.goals.title') }}</h2>
           </div>
           <VBtn color="primary" prepend-icon="mdi-plus" class="text-none font-weight-medium rounded-lg px-4" @click="openGoal()"
-            >สร้างเป้าหมาย</VBtn
+            >{{ $t('plans.goals.createGoal') }}</VBtn
           >
         </div>
         <div v-if="data.goals.length" class="goals-grid">
@@ -652,8 +657,8 @@ function goalProgress(goal: FinancialGoal) {
                 <p class="text-caption text-medium-emphasis mb-1">
                   {{
                     goal.target_date
-                      ? `เป้าหมาย ${new Intl.DateTimeFormat("th-TH", { dateStyle: "medium" }).format(new Date(`${goal.target_date}T00:00:00+07:00`))}`
-                      : "ไม่กำหนดวัน"
+                      ? $t('plans.goals.targetDate', { date: formatTargetDate(goal.target_date) })
+                      : $t('plans.goals.noDate')
                   }}
                 </p>
                 <h3 class="text-h6 font-weight-bold mb-0">
@@ -675,7 +680,7 @@ function goalProgress(goal: FinancialGoal) {
                 formatSatang(Number(goal.saved_amount_satang))
               }}</strong
               ><span
-                >จาก {{ formatSatang(Number(goal.target_amount_satang)) }}</span
+                >{{ $t('plans.goals.of', { total: formatSatang(Number(goal.target_amount_satang)) }) }}</span
               >
             </div>
             <VProgressLinear
@@ -687,15 +692,16 @@ function goalProgress(goal: FinancialGoal) {
               class="mt-4"
             />
             <p class="text-caption text-medium-emphasis mt-3 mb-0">
-              เหลืออีก
               {{
-                formatSatang(
-                  Math.max(
-                    0,
-                    Number(goal.target_amount_satang) -
-                      Number(goal.saved_amount_satang),
+                $t('plans.goals.remaining', {
+                  amount: formatSatang(
+                    Math.max(
+                      0,
+                      Number(goal.target_amount_satang) -
+                        Number(goal.saved_amount_satang),
+                    ),
                   ),
-                )
+                })
               }}
             </p>
           </VCard>
@@ -704,12 +710,12 @@ function goalProgress(goal: FinancialGoal) {
           ><VAvatar color="primary" variant="tonal" size="64" class="mb-4" rounded="xl"
             ><VIcon icon="mdi-flag-outline" size="32" color="primary"
           /></VAvatar>
-          <h2 class="text-h6 font-weight-bold">ตั้งชื่อให้เงินก้อนถัดไป</h2>
+          <h2 class="text-h6 font-weight-bold">{{ $t('plans.goals.emptyTitle') }}</h2>
           <p class="text-body-2 text-medium-emphasis mt-1 mb-6">
-            เงินฉุกเฉิน ทริปพักผ่อน หรือของชิ้นสำคัญ เริ่มติดตามได้จากที่นี่
+            {{ $t('plans.goals.emptySubtitle') }}
           </p>
           <VBtn color="primary" class="text-none font-weight-medium rounded-lg px-6" @click="openGoal()"
-            >สร้างเป้าหมายแรก</VBtn
+            >{{ $t('plans.goals.createFirstGoal') }}</VBtn
           ></VCard
         >
       </section>
@@ -718,7 +724,7 @@ function goalProgress(goal: FinancialGoal) {
     <VDialog v-model="budgetDialog" max-width="480">
       <VCard class="pa-6 rounded-xl"
         ><h2 class="text-h6 font-weight-bold">
-          {{ editingBudgetId ? "ปรับวงเงิน" : "เพิ่มงบรายหมวด" }}
+          {{ editingBudgetId ? $t('plans.budgets.dialogEditTitle') : $t('plans.budgets.dialogAddTitle') }}
         </h2>
         <p class="text-body-2 text-medium-emphasis mt-1 mb-5">
           {{ formatReportMonth(selectedMonth) }}
@@ -726,7 +732,7 @@ function goalProgress(goal: FinancialGoal) {
         <VForm @submit.prevent="submitBudget"
           ><VSelect
             v-model="budgetForm.categoryId"
-            label="หมวดรายจ่าย"
+            :label="$t('plans.budgets.categoryLabel')"
             :items="availableCategories"
             item-title="name"
             item-value="id"
@@ -735,7 +741,7 @@ function goalProgress(goal: FinancialGoal) {
             rounded="lg"
           /><VTextField
             v-model="budgetForm.amount"
-            label="วงเงิน"
+            :label="$t('plans.budgets.amountLabel')"
             prefix="฿"
             inputmode="decimal"
             class="mb-4"
@@ -748,11 +754,11 @@ function goalProgress(goal: FinancialGoal) {
               color="error"
               class="text-none font-weight-medium rounded-lg"
               @click="removeBudget(editingBudgetId)"
-              >ลบงบ</VBtn
+              >{{ $t('plans.budgets.deleteBudget') }}</VBtn
             ><VSpacer /><VBtn variant="text" class="text-none rounded-lg" @click="budgetDialog = false"
-              >ยกเลิก</VBtn
+              >{{ $t('common.cancel') }}</VBtn
             ><VBtn type="submit" color="primary" class="text-none font-weight-medium rounded-lg px-5" :loading="pending"
-              >บันทึก</VBtn
+              >{{ $t('common.save') }}</VBtn
             >
           </div></VForm
         ></VCard
@@ -762,29 +768,29 @@ function goalProgress(goal: FinancialGoal) {
     <VDialog v-model="goalDialog" max-width="520">
       <VCard class="pa-6 rounded-xl"
         ><h2 class="text-h6 font-weight-bold">
-          {{ goalForm.id ? "อัปเดตเป้าหมาย" : "สร้างเป้าหมาย" }}
+          {{ goalForm.id ? $t('plans.goals.dialogEditTitle') : $t('plans.goals.dialogCreateTitle') }}
         </h2>
         <p class="text-body-2 text-medium-emphasis mt-1 mb-5">
-          บันทึกความคืบหน้าด้วยยอดที่ออมได้จริง
+          {{ $t('plans.goals.dialogSubtitle') }}
         </p>
         <VForm @submit.prevent="submitGoal"
           ><VTextField
             v-model="goalForm.name"
-            label="ชื่อเป้าหมาย"
+            :label="$t('plans.goals.nameLabel')"
             class="mb-3"
             rounded="lg"
           /><VRow dense
             ><VCol cols="12" sm="6"
               ><VTextField
                 v-model="goalForm.target"
-                label="ยอดเป้าหมาย"
+                :label="$t('plans.goals.targetLabel')"
                 prefix="฿"
                 inputmode="decimal"
                 rounded="lg" /></VCol
             ><VCol cols="12" sm="6"
               ><VTextField
                 v-model="goalForm.saved"
-                label="ออมแล้ว"
+                :label="$t('plans.goals.savedLabel')"
                 prefix="฿"
                 inputmode="decimal"
                 rounded="lg" /></VCol></VRow
@@ -792,13 +798,13 @@ function goalProgress(goal: FinancialGoal) {
             ><VCol cols="12" sm="8"
               ><VTextField
                 v-model="goalForm.targetDate"
-                label="วันที่อยากถึงเป้าหมาย"
+                :label="$t('plans.goals.targetDateLabel')"
                 type="date"
                 rounded="lg" /></VCol
             ><VCol cols="12" sm="4"
               ><VTextField
                 v-model="goalForm.color"
-                label="สี"
+                :label="$t('plans.goals.colorLabel')"
                 type="color"
                 rounded="lg" /></VCol
           ></VRow>
@@ -809,11 +815,11 @@ function goalProgress(goal: FinancialGoal) {
               color="error"
               class="text-none font-weight-medium rounded-lg"
               @click="removeGoal(goalForm.id)"
-              >ลบเป้าหมาย</VBtn
+              >{{ $t('plans.goals.deleteGoal') }}</VBtn
             ><VSpacer /><VBtn variant="text" class="text-none rounded-lg" @click="goalDialog = false"
-              >ยกเลิก</VBtn
+              >{{ $t('common.cancel') }}</VBtn
             ><VBtn type="submit" color="primary" class="text-none font-weight-medium rounded-lg px-5" :loading="pending"
-              >บันทึก</VBtn
+              >{{ $t('common.save') }}</VBtn
             >
           </div></VForm
         ></VCard
@@ -996,16 +1002,5 @@ function goalProgress(goal: FinancialGoal) {
 }
 .empty-card {
   border-style: dashed !important;
-}
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 </style>

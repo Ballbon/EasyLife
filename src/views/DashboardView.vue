@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 
 import AllocationOverview from "@/components/AllocationOverview.vue";
 import CategoryBreakdown from "@/components/CategoryBreakdown.vue";
@@ -21,6 +22,7 @@ import {
 } from "@/lib/transactions";
 import type { Transaction } from "@/types/finance";
 
+const { t, locale } = useI18n();
 const loading = ref(true);
 const error = ref("");
 const data = ref<FinanceData>();
@@ -79,18 +81,22 @@ const accountNames = computed(
 const categoryNames = computed(
   () => new Map(data.value?.categories.map((item) => [item.id, item.name])),
 );
-const dateLabel = new Intl.DateTimeFormat("th-TH", {
-  timeZone: "Asia/Bangkok",
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-}).format(new Date());
+
+const dateLabel = computed(() =>
+  new Intl.DateTimeFormat(locale.value === "th" ? "th-TH" : "en-US", {
+    timeZone: "Asia/Bangkok",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date()),
+);
 
 function transactionTitle(item: Transaction) {
   const type = item.transaction_type as TransactionType;
+  const accFallback = t("dashboard.accountFallback");
   return type === "transfer"
-    ? `${accountNames.value.get(item.account_id) ?? "บัญชี"} → ${accountNames.value.get(item.destination_account_id ?? "") ?? "บัญชี"}`
+    ? `${accountNames.value.get(item.account_id) ?? accFallback} → ${accountNames.value.get(item.destination_account_id ?? "") ?? accFallback}`
     : (categoryNames.value.get(item.category_id ?? "") ??
         transactionTypeLabels[type]);
 }
@@ -110,10 +116,10 @@ function typeIcon(type: string) {
         <div>
           <p class="text-caption font-weight-medium text-disabled mb-1">{{ dateLabel }}</p>
           <h1 class="page-title mb-0">
-            สวัสดี {{ data.profile.display_name ?? "ผู้ใช้ EasyLife" }}
+            {{ $t('dashboard.greeting', { name: data.profile.display_name ?? $t('dashboard.defaultUser') }) }}
           </h1>
           <p class="text-body-2 text-medium-emphasis mt-1 mb-0">
-            สรุปภาพรวมการเงินและการบริหารจัดการของคุณในวันนี้
+            {{ $t('dashboard.subtitle') }}
           </p>
         </div>
         <VBtn
@@ -123,7 +129,7 @@ function typeIcon(type: string) {
           prepend-icon="mdi-chart-box-outline"
           class="text-none font-weight-medium border-opacity-75 rounded-lg"
         >
-          ดูรายงานย้อนหลัง
+          {{ $t('dashboard.viewPastReports') }}
         </VBtn>
       </header>
 
@@ -135,7 +141,7 @@ function typeIcon(type: string) {
               <div class="d-flex align-center justify-space-between mb-4">
                 <span class="d-flex align-center ga-2 text-body-2 font-weight-medium text-white-70">
                   <VIcon icon="mdi-wallet-outline" size="18" />
-                  เงินคงเหลือสุทธิทุกบัญชี
+                  {{ $t('dashboard.netBalance') }}
                 </span>
                 <span class="badge-period px-3 py-1 text-caption font-weight-medium rounded-pill">
                   {{ formatReportMonth(month) }}
@@ -143,7 +149,7 @@ function typeIcon(type: string) {
               </div>
               <div class="balance-value my-2">{{ formatSatang(totalBalance) }}</div>
               <div class="d-flex align-center ga-2 text-body-2 text-white-80 mt-4">
-                <span>กระแสเงินสดสุทธิเดือนนี้:</span>
+                <span>{{ $t('dashboard.monthlyNetCashflow') }}</span>
                 <span
                   class="font-weight-bold"
                   :class="report.net >= 0 ? 'text-emerald-300' : 'text-rose-300'"
@@ -158,8 +164,8 @@ function typeIcon(type: string) {
           <VCard class="materio-card h-100 pa-6 rounded-xl">
             <div class="d-flex align-center justify-space-between mb-4">
               <div>
-                <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">วันนี้</p>
-                <h2 class="text-subtitle-1 font-weight-bold mb-0">เงินเข้าและออก</h2>
+                <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">{{ $t('dashboard.today') }}</p>
+                <h2 class="text-subtitle-1 font-weight-bold mb-0">{{ $t('dashboard.inAndOut') }}</h2>
               </div>
               <VAvatar color="primary" variant="tonal" rounded="lg" size="40">
                 <VIcon icon="mdi-calendar-today-outline" size="20" />
@@ -167,13 +173,13 @@ function typeIcon(type: string) {
             </div>
             <div class="today-grid py-2">
               <div>
-                <p class="text-caption text-medium-emphasis mb-1">รายรับวันนี้</p>
+                <p class="text-caption text-medium-emphasis mb-1">{{ $t('dashboard.todayIncome') }}</p>
                 <p class="text-h6 font-weight-bold amount-income mb-0">
                   {{ formatSatang(today.income) }}
                 </p>
               </div>
               <div>
-                <p class="text-caption text-medium-emphasis mb-1">รายจ่ายวันนี้</p>
+                <p class="text-caption text-medium-emphasis mb-1">{{ $t('dashboard.todayExpense') }}</p>
                 <p class="text-h6 font-weight-bold amount-expense mb-0">
                   {{ formatSatang(today.expense) }}
                 </p>
@@ -182,8 +188,8 @@ function typeIcon(type: string) {
             <p class="text-caption text-medium-emphasis mt-4 mb-0">
               {{
                 today.transactionCount
-                  ? `${today.transactionCount} รายการที่มีผลต่อกระแสเงินสด`
-                  : "วันนี้ยังไม่มีรายการรับหรือจ่าย"
+                  ? $t('dashboard.todayCountText', { count: today.transactionCount })
+                  : $t('dashboard.todayNoTransactions')
               }}
             </p>
           </VCard>
@@ -195,7 +201,7 @@ function typeIcon(type: string) {
         <VCol cols="12" sm="4">
           <VCard class="materio-card h-100 pa-5 rounded-xl">
             <div class="d-flex align-center justify-space-between">
-              <span class="text-body-2 text-medium-emphasis">รายรับเดือนนี้</span>
+              <span class="text-body-2 text-medium-emphasis">{{ $t('dashboard.incomeThisMonth') }}</span>
               <VAvatar color="success" variant="tonal" size="32" rounded="md">
                 <VIcon icon="mdi-trending-up" size="18" color="success" />
               </VAvatar>
@@ -208,7 +214,7 @@ function typeIcon(type: string) {
         <VCol cols="12" sm="4">
           <VCard class="materio-card h-100 pa-5 rounded-xl">
             <div class="d-flex align-center justify-space-between">
-              <span class="text-body-2 text-medium-emphasis">รายจ่ายเดือนนี้</span>
+              <span class="text-body-2 text-medium-emphasis">{{ $t('dashboard.expenseThisMonth') }}</span>
               <VAvatar color="error" variant="tonal" size="32" rounded="md">
                 <VIcon icon="mdi-trending-down" size="18" color="error" />
               </VAvatar>
@@ -221,13 +227,13 @@ function typeIcon(type: string) {
         <VCol cols="12" sm="4">
           <VCard class="materio-card h-100 pa-5 rounded-xl">
             <div class="d-flex align-center justify-space-between">
-              <span class="text-body-2 text-medium-emphasis">หมวดที่ใช้มากสุด</span>
+              <span class="text-body-2 text-medium-emphasis">{{ $t('dashboard.topCategory') }}</span>
               <VAvatar color="primary" variant="tonal" size="32" rounded="md">
                 <VIcon icon="mdi-shape-outline" size="18" color="primary" />
               </VAvatar>
             </div>
             <p class="text-h6 font-weight-bold mt-3 mb-0 text-truncate">
-              {{ report.categories[0]?.name ?? "ยังไม่มีข้อมูล" }}
+              {{ report.categories[0]?.name ?? $t('dashboard.noData') }}
             </p>
             <p v-if="report.categories[0]" class="text-caption text-medium-emphasis mt-1 mb-0">
               {{ formatSatang(report.categories[0].amount) }}
@@ -245,9 +251,9 @@ function typeIcon(type: string) {
           <VCard class="materio-card h-100 pa-6 rounded-xl">
             <div class="d-flex flex-wrap align-start justify-space-between ga-3 mb-4">
               <div>
-                <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">จังหวะการใช้เงิน</p>
+                <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">{{ $t('dashboard.spendingPacing') }}</p>
                 <h2 class="text-subtitle-1 font-weight-bold mb-0">
-                  รายรับและรายจ่ายรายวัน
+                  {{ $t('dashboard.dailyIncomeExpense') }}
                 </h2>
               </div>
               <VBtn
@@ -257,7 +263,7 @@ function typeIcon(type: string) {
                 append-icon="mdi-arrow-right"
                 class="text-none font-weight-medium px-2"
               >
-                ดูรายละเอียด
+                {{ $t('dashboard.viewDetails') }}
               </VBtn>
             </div>
             <DailyCashflowChart :data="report.daily" />
@@ -265,8 +271,8 @@ function typeIcon(type: string) {
         </VCol>
         <VCol cols="12" lg="4">
           <VCard class="materio-card h-100 pa-6 rounded-xl">
-            <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">สัดส่วนรายจ่าย</p>
-            <h2 class="text-subtitle-1 font-weight-bold mb-4">ใช้ไปกับอะไร</h2>
+            <p class="text-caption font-weight-bold text-uppercase text-primary tracking-wider mb-1">{{ $t('dashboard.spendingBreakdown') }}</p>
+            <h2 class="text-subtitle-1 font-weight-bold mb-4">{{ $t('dashboard.whereItWent') }}</h2>
             <CategoryBreakdown :categories="report.categories.slice(0, 5)" />
           </VCard>
         </VCol>
@@ -277,10 +283,10 @@ function typeIcon(type: string) {
         <VCol cols="12" lg="8">
           <VCard class="materio-card h-100 rounded-xl">
             <VCardItem class="px-6 py-4">
-              <VCardTitle class="text-subtitle-1 font-weight-bold">รายการล่าสุด</VCardTitle>
+              <VCardTitle class="text-subtitle-1 font-weight-bold">{{ $t('dashboard.recentTransactions') }}</VCardTitle>
               <template #append>
                 <VBtn to="/transactions" variant="text" color="primary" class="text-none font-weight-medium"
-                  >ดูทั้งหมด</VBtn
+                  >{{ $t('dashboard.viewAll') }}</VBtn
                 >
               </template>
             </VCardItem>
@@ -336,13 +342,13 @@ function typeIcon(type: string) {
             </VList>
             <div v-else class="pa-10 text-center text-medium-emphasis">
               <VIcon icon="mdi-receipt-text-outline" size="44" class="mb-3 text-disabled" />
-              <p class="mb-2">ยังไม่มีรายการ เริ่มบันทึกเพื่อเห็นภาพรวมของคุณ</p>
+              <p class="mb-2">{{ $t('dashboard.noTransactionsYet') }}</p>
               <VBtn
                 to="/transactions/new"
                 variant="flat"
                 color="primary"
                 class="text-none font-weight-medium rounded-lg px-4"
-                >เพิ่มรายการแรก</VBtn
+                >{{ $t('dashboard.addFirstTransaction') }}</VBtn
               >
             </div>
           </VCard>
@@ -351,7 +357,7 @@ function typeIcon(type: string) {
         <VCol cols="12" lg="4">
           <VCard class="materio-card h-100 rounded-xl">
             <VCardItem class="px-6 py-4">
-              <VCardTitle class="text-subtitle-1 font-weight-bold">ยอดตามบัญชี</VCardTitle>
+              <VCardTitle class="text-subtitle-1 font-weight-bold">{{ $t('dashboard.balanceByAccount') }}</VCardTitle>
             </VCardItem>
             <VDivider class="border-opacity-50" />
             <VList class="py-2">

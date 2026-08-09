@@ -1,13 +1,21 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 
 import { formatSatang } from "@/lib/money";
 import type { DailyTotal } from "@/lib/reports";
 
-const props = defineProps<{ data: DailyTotal[] }>();
+const { t } = useI18n();
+const props = defineProps<{
+  days?: DailyTotal[];
+  month?: string;
+  data?: DailyTotal[];
+}>();
+
+const chartDays = computed(() => props.days || props.data || []);
 
 const maximum = computed(() =>
-  Math.max(1, ...props.data.flatMap((item) => [item.income, item.expense])),
+  Math.max(1, ...chartDays.value.flatMap((item) => [item.income, item.expense])),
 );
 
 function height(value: number) {
@@ -17,40 +25,43 @@ function height(value: number) {
 </script>
 
 <template>
-  <div>
-    <div class="chart-legend d-flex align-center ga-5 mb-5" aria-hidden="true">
-      <span><i class="legend-dot income"></i>รายรับ</span>
-      <span><i class="legend-dot expense"></i>รายจ่าย</span>
+  <VCard class="materio-card pa-6 rounded-xl">
+    <div class="d-flex align-center justify-space-between mb-4">
+      <h2 class="text-subtitle-1 font-weight-bold mb-0">{{ $t("reports.chartTitle") }}</h2>
+      <div class="chart-legend d-flex align-center ga-4" aria-hidden="true">
+        <span><i class="legend-dot income"></i>{{ $t("reports.summary.income") }}</span>
+        <span><i class="legend-dot expense"></i>{{ $t("reports.summary.expense") }}</span>
+      </div>
     </div>
     <div class="chart-scroll">
       <div
         class="cashflow-chart"
         role="img"
-        aria-label="กราฟรายรับและรายจ่ายรายวัน"
+        :aria-label="$t('reports.chartTitle')"
         :style="{
-          gridTemplateColumns: `repeat(${data.length || 31}, minmax(14px, 1fr))`,
+          gridTemplateColumns: `repeat(${chartDays.length || 31}, minmax(14px, 1fr))`,
         }"
       >
-        <div v-for="item in data" :key="item.day" class="chart-day">
+        <div v-for="item in chartDays" :key="item.day" class="chart-day">
           <div class="bars">
             <div
               class="bar income"
               :class="{ empty: item.income === 0 }"
               :style="{ height: height(item.income) }"
-              :title="`วันที่ ${item.day} รายรับ ${formatSatang(item.income)}`"
+              :title="`${item.day}: ${$t('reports.summary.income')} ${formatSatang(item.income)}`"
             ></div>
             <div
               class="bar expense"
               :class="{ empty: item.expense === 0 }"
               :style="{ height: height(item.expense) }"
-              :title="`วันที่ ${item.day} รายจ่าย ${formatSatang(item.expense)}`"
+              :title="`${item.day}: ${$t('reports.summary.expense')} ${formatSatang(item.expense)}`"
             ></div>
           </div>
           <span>{{ item.day }}</span>
         </div>
       </div>
     </div>
-  </div>
+  </VCard>
 </template>
 
 <style scoped>

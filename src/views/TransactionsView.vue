@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 
 import PageState from "@/components/PageState.vue";
 import EmptyState from "@/components/ui/EmptyState.vue";
@@ -13,6 +14,7 @@ import {
 } from "@/lib/transactions";
 import type { Transaction } from "@/types/finance";
 
+const { t } = useI18n();
 const loading = ref(true);
 const error = ref("");
 const data = ref<FinanceData>();
@@ -24,12 +26,13 @@ const filters = reactive({
   from: "",
   to: "",
 });
-const typeItems = [
-  { title: "ทุกประเภท", value: "" },
-  { title: "รายจ่าย", value: "expense" },
-  { title: "รายรับ", value: "income" },
-  { title: "โอนเงิน", value: "transfer" },
-];
+
+const typeItems = computed(() => [
+  { title: t("transactions.allTypes"), value: "" },
+  { title: t("transactions.expense"), value: "expense" },
+  { title: t("transactions.income"), value: "income" },
+  { title: t("transactions.transfer"), value: "transfer" },
+]);
 
 async function loadData() {
   loading.value = true;
@@ -99,8 +102,9 @@ const transactions = computed(
 
 function title(item: Transaction) {
   const type = item.transaction_type as TransactionType;
+  const accFallback = t("dashboard.accountFallback");
   return type === "transfer"
-    ? `${accountNames.value.get(item.account_id) ?? "บัญชี"} → ${accountNames.value.get(item.destination_account_id ?? "") ?? "บัญชี"}`
+    ? `${accountNames.value.get(item.account_id) ?? accFallback} → ${accountNames.value.get(item.destination_account_id ?? "") ?? accFallback}`
     : (categoryNames.value.get(item.category_id ?? "") ??
         transactionTypeLabels[type]);
 }
@@ -121,8 +125,8 @@ function resetFilters() {
     <div v-if="data" class="transactions-page">
       <div class="d-flex flex-wrap align-center justify-space-between ga-4 mb-6">
         <div>
-          <p class="text-caption font-weight-medium text-disabled mb-1">การเงินของคุณ</p>
-          <h1 class="page-title mb-0">รายการทั้งหมด</h1>
+          <p class="text-caption font-weight-medium text-disabled mb-1">{{ $t('transactions.subTitle') }}</p>
+          <h1 class="page-title mb-0">{{ $t('transactions.pageTitle') }}</h1>
         </div>
         <div class="d-flex ga-3">
           <VBtn
@@ -132,10 +136,10 @@ function resetFilters() {
             class="text-none font-weight-medium border-opacity-75 rounded-lg"
             @click="handleExportCsv"
           >
-            ส่งออก CSV
+            {{ $t('transactions.exportCsv') }}
           </VBtn>
           <VBtn to="/transactions/new" color="primary" prepend-icon="mdi-plus" class="text-none font-weight-medium rounded-lg px-4">
-            เพิ่มรายการ
+            {{ $t('transactions.addTransaction') }}
           </VBtn>
         </div>
       </div>
@@ -146,7 +150,7 @@ function resetFilters() {
           <VCol cols="12" md="4">
             <VTextField
               v-model="filters.q"
-              placeholder="ค้นหาโน้ต บัญชี หมวดหมู่..."
+              :placeholder="$t('transactions.searchPlaceholder')"
               prepend-inner-icon="mdi-magnify"
               clearable
               hide-details
@@ -156,7 +160,7 @@ function resetFilters() {
           <VCol cols="6" md="2">
             <VSelect
               v-model="filters.type"
-              label="ประเภท"
+              :label="$t('transactions.type')"
               :items="typeItems"
               hide-details
               rounded="lg"
@@ -165,9 +169,9 @@ function resetFilters() {
           <VCol cols="6" md="2">
             <VSelect
               v-model="filters.account"
-              label="บัญชี"
+              :label="$t('transactions.account')"
               :items="[
-                { title: 'ทุกบัญชี', value: '' },
+                { title: $t('transactions.allAccounts'), value: '' },
                 ...data.accounts.map((a) => ({ title: a.name, value: a.id })),
               ]"
               hide-details
@@ -177,9 +181,9 @@ function resetFilters() {
           <VCol cols="6" md="2">
             <VSelect
               v-model="filters.category"
-              label="หมวดหมู่"
+              :label="$t('transactions.category')"
               :items="[
-                { title: 'ทุกหมวดหมู่', value: '' },
+                { title: $t('transactions.allCategories'), value: '' },
                 ...data.categories.map((c) => ({ title: c.name, value: c.id })),
               ]"
               hide-details
@@ -195,13 +199,13 @@ function resetFilters() {
               class="text-none rounded-lg"
               @click="resetFilters"
             >
-              ล้างตัวกรอง
+              {{ $t('transactions.clearFilters') }}
             </VBtn>
           </VCol>
           <VCol cols="6" md="2">
             <VTextField
               v-model="filters.from"
-              label="ตั้งแต่วันที่"
+              :label="$t('transactions.fromDate')"
               type="date"
               hide-details
               rounded="lg"
@@ -210,7 +214,7 @@ function resetFilters() {
           <VCol cols="6" md="2">
             <VTextField
               v-model="filters.to"
-              label="ถึงวันที่"
+              :label="$t('transactions.toDate')"
               type="date"
               hide-details
               rounded="lg"
@@ -283,9 +287,9 @@ function resetFilters() {
 
         <EmptyState
           v-else
-          title="ไม่พบรายการการเงิน"
-          description="ไม่พบรายการที่ตรงกับเงื่อนไขการกรองของคุณ ลองเปลี่ยนตัวกรองหรือเพิ่มรายการแรก"
-          action-text="เพิ่มรายการใหม่"
+          :title="$t('transactions.emptyTitle')"
+          :description="$t('transactions.emptyDescription')"
+          :action-text="$t('transactions.addNew')"
           action-icon="mdi-plus"
           to="/transactions/new"
         />

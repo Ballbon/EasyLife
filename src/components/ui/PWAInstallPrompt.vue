@@ -48,20 +48,20 @@ function dismissBanner() {
       </VAvatar>
       <div>
         <div class="text-subtitle-2 font-weight-bold text-high-emphasis">
-          ติดตั้งแอป EasyLife
+          {{ $t('components.pwaPrompt.title') }}
         </div>
         <div class="text-caption text-medium-emphasis">
-          ติดตั้งลงในเครื่องเพื่อใช้งานได้อย่างรวดเร็วและรองรับออฟไลน์
+          {{ $t('components.pwaPrompt.message') }}
         </div>
       </div>
     </div>
 
     <template #actions>
       <VBtn color="primary" size="small" variant="flat" @click="installPWA">
-        ติดตั้ง
+        {{ $t('components.pwaPrompt.install') }}
       </VBtn>
       <VBtn color="secondary" size="small" variant="text" @click="dismissBanner">
-        ไว้ทีหลัง
+        {{ $t('components.pwaPrompt.dismiss') }}
       </VBtn>
     </template>
   </VSnackbar>

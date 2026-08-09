@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { z } from "zod";
 
@@ -8,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import type { FieldErrors } from "@/types/finance";
 
 type Mode = "login" | "register" | "forgot" | "reset";
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { goBack } = useAppNavigation();
@@ -28,24 +30,24 @@ const copy = computed(
   () =>
     ({
       login: {
-        title: "ยินดีต้อนรับกลับ",
-        description: "เข้าสู่ระบบเพื่อดูภาพรวมการเงินของคุณ",
-        action: "เข้าสู่ระบบ",
+        title: t("auth.login.title"),
+        description: t("auth.login.description"),
+        action: t("auth.login.action"),
       },
       register: {
-        title: "เริ่มต้นใช้ EasyLife",
-        description: "สร้างบัญชีเพื่อจัดการการเงินให้ง่ายขึ้น",
-        action: "สร้างบัญชี",
+        title: t("auth.register.title"),
+        description: t("auth.register.description"),
+        action: t("auth.register.action"),
       },
       forgot: {
-        title: "ลืมรหัสผ่าน",
-        description: "เราจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้ทางอีเมล",
-        action: "ส่งลิงก์ตั้งรหัสผ่าน",
+        title: t("auth.forgot.title"),
+        description: t("auth.forgot.description"),
+        action: t("auth.forgot.action"),
       },
       reset: {
-        title: "ตั้งรหัสผ่านใหม่",
-        description: "ใช้รหัสผ่านอย่างน้อย 8 ตัวอักษร",
-        action: "บันทึกรหัสผ่านใหม่",
+        title: t("auth.reset.title"),
+        description: t("auth.reset.description"),
+        action: t("auth.reset.action"),
       },
     })[mode.value],
 );
@@ -56,22 +58,22 @@ watch(mode, () => {
 });
 
 function validate() {
-  const email = z.string().trim().email("กรุณากรอกอีเมลให้ถูกต้อง");
+  const email = z.string().trim().email(t("auth.validation.invalidEmail"));
   const password = z
     .string()
-    .min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร")
-    .max(72, "รหัสผ่านยาวเกินไป");
+    .min(8, t("auth.validation.passwordMin"))
+    .max(72, t("auth.validation.passwordMax"));
   const schemas = {
     login: z.object({
       email,
-      password: z.string().min(1, "กรุณากรอกรหัสผ่าน"),
+      password: z.string().min(1, t("auth.validation.passwordRequired")),
     }),
     register: z
       .object({
         displayName: z
           .string()
           .trim()
-          .min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร")
+          .min(2, t("onboarding.validation.nameMin"))
           .max(80),
         email,
         password,
@@ -79,14 +81,14 @@ function validate() {
       })
       .refine((value) => value.password === value.confirmPassword, {
         path: ["confirmPassword"],
-        message: "รหัสผ่านทั้งสองช่องไม่ตรงกัน",
+        message: t("auth.validation.passwordMismatch"),
       }),
     forgot: z.object({ email }),
     reset: z
       .object({ password, confirmPassword: z.string() })
       .refine((value) => value.password === value.confirmPassword, {
         path: ["confirmPassword"],
-        message: "รหัสผ่านทั้งสองช่องไม่ตรงกัน",
+        message: t("auth.validation.passwordMismatch"),
       }),
   };
   const result = schemas[mode.value].safeParse(form);
@@ -108,7 +110,7 @@ async function submit() {
         email: form.email.trim(),
         password: form.password,
       });
-      if (error) throw new Error("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      if (error) throw new Error(t("auth.messages.invalidCredentials"));
       await router.replace(
         typeof route.query.redirect === "string" ? route.query.redirect : "/",
       );
@@ -124,31 +126,31 @@ async function submit() {
       if (error)
         throw new Error(
           error.code === "user_already_exists"
-            ? "อีเมลนี้ถูกใช้งานแล้ว"
-            : "สมัครสมาชิกไม่สำเร็จ กรุณาลองใหม่",
+            ? t("auth.messages.emailExists")
+            : t("auth.messages.registerError"),
         );
       if (data.session) await router.replace("/onboarding");
       else {
         success.value = true;
-        message.value = "สมัครสำเร็จ กรุณาเปิดอีเมลเพื่อยืนยันบัญชี";
+        message.value = t("auth.messages.registerSuccessCheckEmail");
       }
     } else if (mode.value === "forgot") {
       await supabase.auth.resetPasswordForEmail(form.email.trim(), {
         redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
       });
       success.value = true;
-      message.value = "หากอีเมลอยู่ในระบบ เราได้ส่งลิงก์ตั้งรหัสผ่านใหม่แล้ว";
+      message.value = t("auth.messages.resetSentIfFound");
     } else {
       const { error } = await supabase.auth.updateUser({
         password: form.password,
       });
-      if (error) throw new Error("ตั้งรหัสผ่านใหม่ไม่สำเร็จ");
+      if (error) throw new Error(t("auth.messages.resetFailed"));
       await supabase.auth.signOut();
       await router.replace({ path: "/login", query: { reset: "success" } });
     }
   } catch (error) {
     message.value =
-      error instanceof Error ? error.message : "เกิดข้อผิดพลาด กรุณาลองใหม่";
+      error instanceof Error ? error.message : t("auth.messages.genericError");
   } finally {
     pending.value = false;
   }
@@ -169,13 +171,10 @@ async function submit() {
           </VAvatar>
           <span class="text-h5 font-weight-bold text-high-emphasis tracking-tight">EasyLife</span>
         </div>
-        <h1 class="text-h3 font-weight-bold mb-4 line-height-tight">
-          ชีวิตการเงินที่เบาลง<br /><span class="text-primary"
-            >เริ่มต้นได้อย่างมั่นใจ</span
-          >
+        <h1 class="text-h3 font-weight-bold mb-4 line-height-tight" v-html="$t('auth.heroTitle')">
         </h1>
         <p class="text-subtitle-1 text-medium-emphasis">
-          เห็นภาพรวมรายรับ รายจ่าย และบริหารจัดการทุกบัญชีได้อย่างสมบูรณ์แบบ
+          {{ $t('auth.heroSubtitle') }}
         </p>
       </section>
 
@@ -195,7 +194,7 @@ async function submit() {
             class="px-0 text-none rounded-lg"
             @click="goBack('/login')"
           >
-            ย้อนกลับไปหน้าเข้าสู่ระบบ
+            {{ $t('auth.backToLogin') }}
           </VBtn>
         </div>
         <h2 class="text-h5 font-weight-bold">{{ copy.title }}</h2>
@@ -205,7 +204,7 @@ async function submit() {
           type="success"
           variant="tonal"
           class="mb-5 rounded-lg"
-          >ตั้งรหัสผ่านใหม่สำเร็จแล้ว กรุณาเข้าสู่ระบบ</VAlert
+          >{{ $t('auth.messages.resetSuccessLogin') }}</VAlert
         >
         <VAlert
           v-if="message"
@@ -218,7 +217,7 @@ async function submit() {
           <VTextField
             v-if="mode === 'register'"
             v-model="form.displayName"
-            label="ชื่อที่ใช้ในแอป"
+            :label="$t('onboarding.displayNameLabel')"
             autocomplete="name"
             :error-messages="errors.displayName"
             class="mb-3"
@@ -227,7 +226,7 @@ async function submit() {
           <VTextField
             v-if="mode !== 'reset'"
             v-model="form.email"
-            label="อีเมล"
+            :label="$t('auth.labels.email')"
             type="email"
             autocomplete="email"
             prepend-inner-icon="mdi-email-outline"
@@ -238,7 +237,7 @@ async function submit() {
           <VTextField
             v-if="mode === 'login' || mode === 'register' || mode === 'reset'"
             v-model="form.password"
-            :label="mode === 'reset' ? 'รหัสผ่านใหม่' : 'รหัสผ่าน'"
+            :label="mode === 'reset' ? $t('auth.labels.newPassword') : $t('auth.labels.password')"
             :type="showPassword ? 'text' : 'password'"
             prepend-inner-icon="mdi-lock-outline"
             :append-inner-icon="
@@ -252,7 +251,7 @@ async function submit() {
           <VTextField
             v-if="mode === 'register' || mode === 'reset'"
             v-model="form.confirmPassword"
-            label="ยืนยันรหัสผ่าน"
+            :label="$t('auth.labels.confirmPassword')"
             :type="showPassword ? 'text' : 'password'"
             prepend-inner-icon="mdi-lock-check-outline"
             :error-messages="errors.confirmPassword"
@@ -261,7 +260,7 @@ async function submit() {
           />
           <div v-if="mode === 'login'" class="mb-5 text-right">
             <RouterLink to="/forgot-password" class="text-primary text-caption font-weight-medium"
-              >ลืมรหัสผ่าน?</RouterLink
+              >{{ $t('auth.forgotPasswordLink') }}</RouterLink
             >
           </div>
           <VBtn
@@ -278,23 +277,23 @@ async function submit() {
           v-if="mode === 'login'"
           class="mt-6 text-center text-body-2 text-medium-emphasis mb-0"
         >
-          ยังไม่มีบัญชี?
+          {{ $t('auth.noAccount') }}
           <RouterLink to="/register" class="text-primary font-weight-semibold ml-1"
-            >สมัครสมาชิก</RouterLink
+            >{{ $t('auth.registerLink') }}</RouterLink
           >
         </p>
         <p
           v-else-if="mode === 'register'"
           class="mt-6 text-center text-body-2 text-medium-emphasis mb-0"
         >
-          มีบัญชีแล้ว?
+          {{ $t('auth.hasAccount') }}
           <RouterLink to="/login" class="text-primary font-weight-semibold ml-1"
-            >เข้าสู่ระบบ</RouterLink
+            >{{ $t('auth.loginLink') }}</RouterLink
           >
         </p>
         <p v-else-if="mode === 'forgot'" class="mt-6 text-center mb-0">
           <RouterLink to="/login" class="text-primary text-body-2 font-weight-medium"
-            >กลับไปหน้าเข้าสู่ระบบ</RouterLink
+            >{{ $t('auth.backToLogin') }}</RouterLink
           >
         </p>
       </VCard>

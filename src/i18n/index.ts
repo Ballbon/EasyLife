@@ -31,6 +31,10 @@ export const i18n = createI18n({
 })
 
 export function setLocale(locale: SupportedLocale): void {
-  i18n.global.locale.value = locale
+  if (i18n.mode === 'legacy') {
+    ;(i18n.global.locale as unknown as string) = locale
+  } else {
+    ;(i18n.global.locale as any).value = locale
+  }
   localStorage.setItem(STORAGE_KEY, locale)
 }

@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDisplay } from "vuetify";
+import { useI18n } from "vue-i18n";
 
 import { useAppNavigation } from "@/lib/navigation";
 import { supabase } from "@/lib/supabase";
@@ -11,6 +12,7 @@ import PWAInstallPrompt from "@/components/ui/PWAInstallPrompt.vue";
 import { useNetworkStatus } from "@/composables/useNetworkStatus";
 import { useThemeMode } from "@/composables/useThemeMode";
 
+const { t, te } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const { mdAndUp } = useDisplay();
@@ -22,6 +24,14 @@ const { goBack } = useAppNavigation();
 const { isOnline } = useNetworkStatus();
 const { mode, toggleMode } = useThemeMode();
 
+const pageTitle = computed(() => {
+  const key = route.meta.titleKey as string | undefined;
+  if (key && te(key)) {
+    return t(key);
+  }
+  return (route.meta.title as string) || "EasyLife";
+});
+
 const isExpanded = computed(
   () => isPinned.value || isHovering.value || !mdAndUp.value,
 );
@@ -31,28 +41,28 @@ function togglePin() {
   window.localStorage.setItem("sidebar_pinned", String(isPinned.value));
 }
 
-const mainNavItems = [
-  { title: "ภาพรวม", icon: "mdi-view-dashboard-outline", to: "/dashboard" },
-  { title: "รายการ", icon: "mdi-swap-horizontal", to: "/transactions" },
-  { title: "แผนการเงิน", icon: "mdi-chart-donut", to: "/plans" },
-];
+const mainNavItems = computed(() => [
+  { title: t("nav.dashboard"), icon: "mdi-view-dashboard-outline", to: "/dashboard" },
+  { title: t("nav.transactions"), icon: "mdi-swap-horizontal", to: "/transactions" },
+  { title: t("nav.plans"), icon: "mdi-chart-donut", to: "/plans" },
+]);
 
-const insightNavItems = [
-  { title: "รายงาน", icon: "mdi-chart-box-outline", to: "/reports" },
-  { title: "หมวดหมู่", icon: "mdi-shape-outline", to: "/settings/categories" },
-];
+const insightNavItems = computed(() => [
+  { title: t("nav.reports"), icon: "mdi-chart-box-outline", to: "/reports" },
+  { title: t("nav.categories"), icon: "mdi-shape-outline", to: "/settings/categories" },
+]);
 
-const toolNavItems = [
+const toolNavItems = computed(() => [
   {
-    title: "Daily Quest",
+    title: t("nav.quests"),
     icon: "mdi-checkbox-marked-circle-outline",
     to: "/quests",
   },
-];
+]);
 
-const accountNavItems = [
-  { title: "บัญชี", icon: "mdi-wallet-outline", to: "/settings/accounts" },
-];
+const accountNavItems = computed(() => [
+  { title: t("nav.accounts"), icon: "mdi-wallet-outline", to: "/settings/accounts" },
+]);
 
 const showFab = computed(
   () => route.path === "/dashboard" || route.path === "/transactions",
@@ -103,7 +113,7 @@ async function logout() {
     class="text-center position-fixed top-0 w-100 banner-offline"
     icon="mdi-wifi-off"
   >
-    คุณกำลังใช้งานในโหมดออฟไลน์ ข้อมูลล่าสุดถูกบันทึกไว้ในแคช
+    {{ $t('common.offlineBanner') }}
   </VAlert>
 
   <VNavigationDrawer
@@ -134,8 +144,8 @@ async function logout() {
         variant="text"
         size="small"
         class="flex-shrink-0 ml-auto"
-        :aria-label="isPinned ? 'ปลดล็อคเมนู' : 'ปักหมุดเมนู'"
-        :title="isPinned ? 'ปลดล็อคเมนู' : 'ปักหมุดเมนู'"
+        :aria-label="isPinned ? $t('nav.unpinMenu') : $t('nav.pinMenu')"
+        :title="isPinned ? $t('nav.unpinMenu') : $t('nav.pinMenu')"
         @click.stop="togglePin"
       >
         <VIcon
@@ -147,7 +157,9 @@ async function logout() {
     <VDivider class="border-opacity-50" />
 
     <VList :class="isExpanded ? 'px-3 py-3' : 'px-2 py-3'" nav>
-      <VListSubheader v-if="isExpanded" class="text-caption font-weight-bold text-uppercase tracking-wider text-disabled px-2 mb-1">หลัก</VListSubheader>
+      <VListSubheader v-if="isExpanded" class="text-caption font-weight-bold text-uppercase tracking-wider text-disabled px-2 mb-1">
+        {{ $t('nav.sections.main') }}
+      </VListSubheader>
       <VListItem
         v-for="item in mainNavItems"
         :key="item.to"
@@ -159,7 +171,9 @@ async function logout() {
         class="mb-1"
       />
 
-      <VListSubheader v-if="isExpanded" class="text-caption font-weight-bold text-uppercase tracking-wider text-disabled px-2 mt-4 mb-1">วิเคราะห์</VListSubheader>
+      <VListSubheader v-if="isExpanded" class="text-caption font-weight-bold text-uppercase tracking-wider text-disabled px-2 mt-4 mb-1">
+        {{ $t('nav.sections.analytics') }}
+      </VListSubheader>
       <VListItem
         v-for="item in insightNavItems"
         :key="item.to"
@@ -171,7 +185,9 @@ async function logout() {
         class="mb-1"
       />
 
-      <VListSubheader v-if="isExpanded" class="text-caption font-weight-bold text-uppercase tracking-wider text-disabled px-2 mt-4 mb-1">เครื่องมือ</VListSubheader>
+      <VListSubheader v-if="isExpanded" class="text-caption font-weight-bold text-uppercase tracking-wider text-disabled px-2 mt-4 mb-1">
+        {{ $t('nav.sections.tools') }}
+      </VListSubheader>
       <VListItem
         v-for="item in toolNavItems"
         :key="item.to"
@@ -183,7 +199,9 @@ async function logout() {
         class="mb-1"
       />
 
-      <VListSubheader v-if="isExpanded" class="text-caption font-weight-bold text-uppercase tracking-wider text-disabled px-2 mt-4 mb-1">บัญชี</VListSubheader>
+      <VListSubheader v-if="isExpanded" class="text-caption font-weight-bold text-uppercase tracking-wider text-disabled px-2 mt-4 mb-1">
+        {{ $t('nav.sections.accounts') }}
+      </VListSubheader>
       <VListItem
         v-for="item in accountNavItems"
         :key="item.to"
@@ -215,8 +233,8 @@ async function logout() {
           icon="mdi-logout"
           variant="text"
           color="secondary"
-          aria-label="ออกจากระบบ"
-          title="ออกจากระบบ"
+          :aria-label="$t('common.logout')"
+          :title="$t('common.logout')"
           @click="logout"
         />
       </div>
@@ -224,18 +242,18 @@ async function logout() {
   </VNavigationDrawer>
 
   <VAppBar flat border height="64" class="app-topbar">
-    <VAppBarNavIcon v-if="!mdAndUp" aria-label="เปิดเมนู" @click="drawer = !drawer" />
+    <VAppBarNavIcon v-if="!mdAndUp" :aria-label="$t('nav.openMenu')" @click="drawer = !drawer" />
     <VBtn
       v-if="showBackButton"
       icon="mdi-arrow-left"
       variant="text"
-      aria-label="ย้อนกลับ"
-      title="ย้อนกลับ"
+      :aria-label="$t('common.back')"
+      :title="$t('common.back')"
       class="ml-1 mr-1"
       @click="goBack('/dashboard')"
     />
     <VAppBarTitle class="font-weight-bold text-h6 text-high-emphasis">{{
-      route.meta.title
+      pageTitle
     }}</VAppBarTitle>
     <template #append>
       <VBtn
@@ -243,8 +261,8 @@ async function logout() {
         variant="text"
         size="small"
         class="mr-2"
-        :aria-label="`เปลี่ยนธีม (${mode})`"
-        :title="`ธีมปัจจุบัน: ${mode === 'system' ? 'ตามระบบ' : mode === 'dark' ? 'มืด' : 'สว่าง'}`"
+        :aria-label="`theme (${mode})`"
+        :title="$t('common.theme.title', { mode: $t(`common.theme.${mode}`) })"
         @click="toggleMode"
       >
         <VIcon
@@ -265,11 +283,11 @@ async function logout() {
         size="small"
         prepend-icon="mdi-plus"
         class="mr-2 d-none d-sm-flex font-weight-medium text-none rounded-lg px-4"
-        aria-label="บันทึกด่วน (Alt+N)"
-        title="บันทึกด่วน (Alt+N)"
+        :aria-label="$t('common.quickAdd')"
+        :title="$t('common.quickAdd')"
         @click="showQuickAdd = true"
       >
-        บันทึกด่วน
+        {{ $t('common.quickAdd') }}
       </VBtn>
       <VAvatar color="primary" variant="tonal" size="36" class="ml-2">
         <VIcon icon="mdi-account" size="20" color="primary" />
@@ -290,8 +308,8 @@ async function logout() {
       size="large"
       color="primary"
       class="fab mb-6 mr-6 rounded-circle"
-      aria-label="บันทึกด่วน"
-      title="บันทึกด่วน (Alt+N)"
+      :aria-label="$t('common.quickAdd')"
+      :title="$t('common.quickAdd')"
       @click="showQuickAdd = true"
     />
   </VMain>

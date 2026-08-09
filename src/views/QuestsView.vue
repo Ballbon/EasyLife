@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 
 import PageState from "@/components/PageState.vue";
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/lib/quests";
 import { nextMonth, previousMonth } from "@/lib/reports";
 
+const { t, locale } = useI18n();
 const today = currentBangkokDate();
 const loading = ref(true);
 const pending = ref(false);
@@ -33,15 +35,15 @@ const dialog = ref(false);
 const selectedDate = ref(today);
 const selectedMonth = ref(today.slice(0, 7));
 
-const weekdays = [
-  { value: 1, label: "จ" },
-  { value: 2, label: "อ" },
-  { value: 3, label: "พ" },
-  { value: 4, label: "พฤ" },
-  { value: 5, label: "ศ" },
-  { value: 6, label: "ส" },
-  { value: 0, label: "อา" },
-];
+const weekdays = computed(() => [
+  { value: 1, label: t("quests.weekdays.mon") },
+  { value: 2, label: t("quests.weekdays.tue") },
+  { value: 3, label: t("quests.weekdays.wed") },
+  { value: 4, label: t("quests.weekdays.thu") },
+  { value: 5, label: t("quests.weekdays.fri") },
+  { value: 6, label: t("quests.weekdays.sat") },
+  { value: 0, label: t("quests.weekdays.sun") },
+]);
 const form = reactive<QuestDraft>(emptyForm());
 
 const todayQuests = computed(() => occurrences(today));
@@ -127,7 +129,7 @@ async function loadData() {
   try {
     await refresh();
   } catch {
-    error.value = "โหลดภารกิจไม่สำเร็จ กรุณาลองใหม่";
+    error.value = t("quests.messages.loadError");
   } finally {
     loading.value = false;
   }
@@ -164,16 +166,16 @@ async function submitQuest() {
   await runAction(async () => {
     await saveQuest(form);
     dialog.value = false;
-    success.value = form.id ? "อัปเดต Quest แล้ว" : "สร้าง Quest แล้ว";
+    success.value = form.id ? t("quests.messages.questUpdated") : t("quests.messages.questCreated");
   });
 }
 
 async function removeQuest() {
-  if (!form.id || !window.confirm("ลบ Quest นี้รวมถึงประวัติทั้งหมด?")) return;
+  if (!form.id || !window.confirm(t("quests.messages.confirmDelete"))) return;
   await runAction(async () => {
     await deleteQuest(form.id!);
     dialog.value = false;
-    success.value = "ลบ Quest แล้ว";
+    success.value = t("quests.messages.questDeleted");
   });
 }
 
@@ -189,7 +191,7 @@ async function toggle(occurrence: QuestOccurrence) {
     );
     await refresh();
   } catch {
-    error.value = "บันทึกสถานะไม่สำเร็จ กรุณาลองใหม่";
+    error.value = t("quests.messages.toggleError");
   } finally {
     togglingId.value = "";
   }
@@ -205,7 +207,7 @@ async function runAction(action: () => Promise<void>) {
     await refresh();
   } catch (caught) {
     error.value =
-      caught instanceof Error ? caught.message : "บันทึกไม่สำเร็จ กรุณาลองใหม่";
+      caught instanceof Error ? caught.message : t("quests.messages.saveError");
   } finally {
     pending.value = false;
   }
@@ -224,16 +226,17 @@ function moveMonth(direction: -1 | 1) {
 }
 
 function formatDate(date: string, options: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat("th-TH", {
+  const loc = locale.value === "th" ? "th-TH" : "en-US";
+  return new Intl.DateTimeFormat(loc, {
     timeZone: "UTC",
     ...options,
   }).format(new Date(`${date}T12:00:00Z`));
 }
 
 function frequencyLabel(occurrence: QuestOccurrence) {
-  if (occurrence.schedule.frequency === "once") return "ครั้งเดียว";
-  if (occurrence.schedule.frequency === "daily") return "ทุกวัน";
-  return "รายสัปดาห์";
+  if (occurrence.schedule.frequency === "once") return t("quests.frequencies.once");
+  if (occurrence.schedule.frequency === "daily") return t("quests.frequencies.daily");
+  return t("quests.frequencies.weekly");
 }
 </script>
 
@@ -242,14 +245,14 @@ function frequencyLabel(occurrence: QuestOccurrence) {
     <div v-if="data" class="quests-page">
       <header class="d-flex flex-wrap align-center justify-space-between ga-4 mb-6">
         <div>
-          <p class="text-caption font-weight-medium text-disabled mb-1">Daily rhythm</p>
-          <h1 class="page-title mb-0">วันนี้ เอาให้จบทีละอย่าง</h1>
+          <p class="text-caption font-weight-medium text-disabled mb-1">{{ $t('quests.tagline') }}</p>
+          <h1 class="page-title mb-0">{{ $t('quests.title') }}</h1>
           <p class="text-body-2 text-medium-emphasis mt-1 mb-0">
-            วางจังหวะเล็ก ๆ ให้ทุกวันขยับไปข้างหน้าอย่างมั่นคง
+            {{ $t('quests.subtitle') }}
           </p>
         </div>
         <VBtn color="primary" prepend-icon="mdi-plus" class="text-none font-weight-medium rounded-lg px-4" @click="openNew(today)">
-          สร้าง Quest
+          {{ $t('quests.createQuest') }}
         </VBtn>
       </header>
 
@@ -273,12 +276,12 @@ function frequencyLabel(occurrence: QuestOccurrence) {
       >
 
       <!-- RHYTHM HERO BOARD -->
-      <section class="rhythm-board mb-6 rounded-xl pa-6" aria-label="สรุป Daily Quest">
+      <section class="rhythm-board mb-6 rounded-xl pa-6" :aria-label="$t('quests.hero.title')">
         <div class="score-block">
-          <span class="score-kicker mb-1">จังหวะต่อเนื่อง</span>
+          <span class="score-kicker mb-1">{{ $t('quests.hero.streak') }}</span>
           <div class="d-flex align-baseline ga-1">
             <strong class="text-h3 font-weight-bold">{{ streak }}</strong>
-            <span class="text-caption">วัน</span>
+            <span class="text-caption">{{ $t('quests.hero.days') }}</span>
           </div>
         </div>
         <div class="week-trail">
@@ -311,15 +314,15 @@ function frequencyLabel(occurrence: QuestOccurrence) {
           <VIcon icon="mdi-star-four-points" color="warning" size="22" />
           <div>
             <strong class="text-subtitle-1 font-weight-bold">{{ points }}</strong>
-            <span class="text-caption"> คะแนนสะสม</span>
+            <span class="text-caption"> {{ $t('quests.hero.points') }}</span>
           </div>
         </div>
       </section>
 
       <VTabs v-model="tab" color="primary" class="quest-tabs mb-6" grow>
-        <VTab value="today" class="text-none font-weight-semibold">วันนี้</VTab>
-        <VTab value="calendar" class="text-none font-weight-semibold">ปฏิทิน</VTab>
-        <VTab value="history" class="text-none font-weight-semibold">ประวัติ</VTab>
+        <VTab value="today" class="text-none font-weight-semibold">{{ $t('quests.tabs.today') }}</VTab>
+        <VTab value="calendar" class="text-none font-weight-semibold">{{ $t('quests.tabs.calendar') }}</VTab>
+        <VTab value="history" class="text-none font-weight-semibold">{{ $t('quests.tabs.history') }}</VTab>
       </VTabs>
 
       <VWindow v-model="tab">
@@ -336,7 +339,7 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                     })
                   }}
                 </p>
-                <h2 class="text-subtitle-1 font-weight-bold mb-0">Quest วันนี้</h2>
+                <h2 class="text-subtitle-1 font-weight-bold mb-0">{{ $t('quests.todayTitle') }}</h2>
               </div>
               <span class="completion-count"
                 >{{ completedToday }} / {{ todayQuests.length }}</span
@@ -357,8 +360,8 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                   "
                   :aria-label="
                     occurrence.completion
-                      ? `ยกเลิก ${occurrence.task.title}`
-                      : `ทำ ${occurrence.task.title} เสร็จแล้ว`
+                      ? $t('quests.cancelTask', { title: occurrence.task.title })
+                      : $t('quests.completeTask', { title: occurrence.task.title })
                   "
                   @update:model-value="toggle(occurrence)"
                 />
@@ -376,17 +379,17 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                   icon="mdi-dots-horizontal"
                   variant="text"
                   size="small"
-                  :aria-label="`แก้ไข ${occurrence.task.title}`"
+                  :aria-label="$t('quests.editTask', { title: occurrence.task.title })"
                   @click="openEdit(occurrence)"
                 />
               </article>
             </div>
             <div v-else class="empty-quest py-10">
               <VIcon icon="mdi-weather-sunset" size="44" color="primary" class="mb-2" />
-              <h3 class="text-h6 font-weight-bold">วันนี้ยังโล่งอยู่</h3>
-              <p class="text-body-2 text-medium-emphasis">เพิ่มหนึ่งสิ่งสำคัญที่อยากทำให้จบ</p>
+              <h3 class="text-h6 font-weight-bold">{{ $t('quests.emptyTodayTitle') }}</h3>
+              <p class="text-body-2 text-medium-emphasis">{{ $t('quests.emptyTodaySubtitle') }}</p>
               <VBtn color="primary" variant="tonal" class="text-none font-weight-medium rounded-lg mt-2" @click="openNew(today)"
-                >เพิ่ม Quest วันนี้</VBtn
+                >{{ $t('quests.addTodayQuest') }}</VBtn
               >
             </div>
           </section>
@@ -399,7 +402,7 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                 <VBtn
                   icon="mdi-chevron-left"
                   variant="text"
-                  aria-label="เดือนก่อน"
+                  :aria-label="$t('quests.prevMonth')"
                   @click="moveMonth(-1)"
                 />
                 <h2 class="text-subtitle-1 font-weight-bold mb-0">
@@ -413,7 +416,7 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                 <VBtn
                   icon="mdi-chevron-right"
                   variant="text"
-                  aria-label="เดือนถัดไป"
+                  :aria-label="$t('quests.nextMonth')"
                   @click="moveMonth(1)"
                 />
               </div>
@@ -450,7 +453,7 @@ function frequencyLabel(occurrence: QuestOccurrence) {
             <aside class="quest-panel day-agenda materio-card rounded-xl pa-6">
               <div class="d-flex align-center justify-space-between mb-4">
                 <div>
-                  <p class="text-caption text-medium-emphasis mb-1">แผนของวันที่</p>
+                  <p class="text-caption text-medium-emphasis mb-1">{{ $t('quests.dayPlan') }}</p>
                   <h2 class="text-subtitle-1 font-weight-bold mb-0">
                     {{
                       formatDate(selectedDate, {
@@ -464,7 +467,7 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                   icon="mdi-plus"
                   color="primary"
                   size="small"
-                  aria-label="เพิ่ม Quest วันที่เลือก"
+                  :aria-label="$t('quests.addSelectedDateQuest')"
                   class="rounded-lg"
                   @click="openNew(selectedDate)"
                 />
@@ -494,7 +497,7 @@ function frequencyLabel(occurrence: QuestOccurrence) {
                 v-else
                 class="text-body-2 text-medium-emphasis py-8 text-center"
               >
-                ไม่มี Quest ในวันนี้
+                {{ $t('quests.noQuestToday') }}
               </p>
             </aside>
           </div>
@@ -504,10 +507,10 @@ function frequencyLabel(occurrence: QuestOccurrence) {
           <section class="quest-panel materio-card rounded-xl pa-6">
             <div class="d-flex align-center justify-space-between mb-4">
               <div>
-                <p class="text-caption text-medium-emphasis mb-1">60 รายการล่าสุด</p>
-                <h2 class="text-subtitle-1 font-weight-bold mb-0">สิ่งที่ทำสำเร็จ</h2>
+                <p class="text-caption text-medium-emphasis mb-1">{{ $t('quests.recentItems') }}</p>
+                <h2 class="text-subtitle-1 font-weight-bold mb-0">{{ $t('quests.completedTitle') }}</h2>
               </div>
-              <span class="completion-count">{{ history.length }} ครั้ง</span>
+              <span class="completion-count">{{ $t('quests.timesCount', { count: history.length }) }}</span>
             </div>
             <div v-if="history.length" class="history-list">
               <article
@@ -534,8 +537,8 @@ function frequencyLabel(occurrence: QuestOccurrence) {
             </div>
             <div v-else class="empty-quest py-10">
               <VIcon icon="mdi-history" size="44" color="primary" class="mb-2" />
-              <h3 class="text-h6 font-weight-bold">ยังไม่มีประวัติ</h3>
-              <p class="text-body-2 text-medium-emphasis">Quest ที่ทำเสร็จจะเรียงอยู่ที่นี่</p>
+              <h3 class="text-h6 font-weight-bold">{{ $t('quests.noHistoryTitle') }}</h3>
+              <p class="text-body-2 text-medium-emphasis">{{ $t('quests.noHistorySubtitle') }}</p>
             </div>
           </section>
         </VWindowItem>
@@ -546,18 +549,18 @@ function frequencyLabel(occurrence: QuestOccurrence) {
   <VDialog v-model="dialog" max-width="620" persistent>
     <VCard class="rounded-xl pa-6">
       <VCardTitle class="d-flex align-center justify-space-between px-0 pt-0 pb-4">
-        <span class="text-h6 font-weight-bold">{{ form.id ? "แก้ไข Quest" : "สร้าง Quest" }}</span>
+        <span class="text-h6 font-weight-bold">{{ form.id ? $t('quests.dialogEditTitle') : $t('quests.dialogCreateTitle') }}</span>
         <VBtn
           icon="mdi-close"
           variant="text"
-          aria-label="ปิด"
+          :aria-label="$t('common.cancel')"
           @click="dialog = false"
         />
       </VCardTitle>
       <VCardText class="px-0 py-2">
         <VTextField
           v-model="form.title"
-          label="ชื่อ Quest"
+          :label="$t('quests.form.titleLabel')"
           maxlength="120"
           autofocus
           class="mb-3"
@@ -565,7 +568,7 @@ function frequencyLabel(occurrence: QuestOccurrence) {
         />
         <VTextarea
           v-model="form.description"
-          label="รายละเอียด (ไม่บังคับ)"
+          :label="$t('quests.form.descLabel')"
           rows="2"
           maxlength="1000"
           class="mb-3"
@@ -574,37 +577,37 @@ function frequencyLabel(occurrence: QuestOccurrence) {
         <div class="form-grid">
           <VSelect
             v-model="form.frequency"
-            label="ทำซ้ำ"
+            :label="$t('quests.form.frequencyLabel')"
             :items="[
-              { title: 'ครั้งเดียว', value: 'once' },
-              { title: 'ทุกวัน', value: 'daily' },
-              { title: 'เลือกวันในสัปดาห์', value: 'weekly' },
+              { title: $t('quests.frequencies.once'), value: 'once' },
+              { title: $t('quests.frequencies.daily'), value: 'daily' },
+              { title: $t('quests.frequencies.weekly'), value: 'weekly' },
             ]"
             rounded="lg"
           />
           <VTextField
             v-model="form.scheduledTime"
             type="time"
-            label="เวลา (ไม่บังคับ)"
+            :label="$t('quests.form.timeLabel')"
             rounded="lg"
           />
           <VTextField
             v-model="form.startDate"
             type="date"
-            :label="form.frequency === 'once' ? 'วันที่ทำ' : 'วันเริ่ม'"
+            :label="form.frequency === 'once' ? $t('quests.form.dateDo') : $t('quests.form.dateStart')"
             rounded="lg"
           />
           <VTextField
             v-if="form.frequency !== 'once'"
             v-model="form.endDate"
             type="date"
-            label="วันสิ้นสุด (ไม่บังคับ)"
+            :label="$t('quests.form.dateEnd')"
             :min="form.startDate"
             rounded="lg"
           />
         </div>
         <div v-if="form.frequency === 'weekly'" class="mb-4">
-          <p class="text-body-2 font-weight-medium mb-2">ทำในวัน</p>
+          <p class="text-body-2 font-weight-medium mb-2">{{ $t('quests.form.daysLabel') }}</p>
           <div class="weekday-picker">
             <VBtn
               v-for="day in weekdays"
@@ -629,11 +632,11 @@ function frequencyLabel(occurrence: QuestOccurrence) {
         <div class="form-grid">
           <VSelect
             v-model="form.priority"
-            label="ความสำคัญ"
+            :label="$t('quests.form.priorityLabel')"
             :items="[
-              { title: 'เบา', value: 'low' },
-              { title: 'ปกติ', value: 'normal' },
-              { title: 'สำคัญ', value: 'high' },
+              { title: $t('quests.priorities.low'), value: 'low' },
+              { title: $t('quests.priorities.normal'), value: 'normal' },
+              { title: $t('quests.priorities.high'), value: 'high' },
             ]"
             rounded="lg"
           />
@@ -643,8 +646,8 @@ function frequencyLabel(occurrence: QuestOccurrence) {
             min="1"
             max="100"
             step="1"
-            label="คะแนน"
-            suffix="แต้ม"
+            :label="$t('quests.form.pointsLabel')"
+            :suffix="$t('quests.form.pointsSuffix')"
             rounded="lg"
           />
         </div>
@@ -657,14 +660,14 @@ function frequencyLabel(occurrence: QuestOccurrence) {
           class="text-none font-weight-medium rounded-lg"
           :disabled="pending"
           @click="removeQuest"
-          >ลบ</VBtn
+          >{{ $t('common.delete') }}</VBtn
         >
         <VSpacer />
         <VBtn variant="text" class="text-none rounded-lg" :disabled="pending" @click="dialog = false"
-          >ยกเลิก</VBtn
+          >{{ $t('common.cancel') }}</VBtn
         >
         <VBtn color="primary" class="text-none font-weight-medium rounded-lg px-5" :loading="pending" @click="submitQuest">{{
-          form.id ? "บันทึกการแก้ไข" : "สร้าง Quest"
+          form.id ? $t('quests.saveEdit') : $t('quests.createQuest')
         }}</VBtn>
       </VCardActions>
     </VCard>

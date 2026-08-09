@@ -9,7 +9,7 @@ export const router = createRouter({
     {
       path: "/login",
       component: () => import("@/views/auth/AuthView.vue"),
-      meta: { guest: true, mode: "login", title: "เข้าสู่ระบบ" },
+      meta: { guest: true, mode: "login", title: "เข้าสู่ระบบ", titleKey: "routes.login" },
     },
     {
       path: "/register",
@@ -43,27 +43,27 @@ export const router = createRouter({
         {
           path: "dashboard",
           component: () => import("@/views/DashboardView.vue"),
-          meta: { title: "ภาพรวม" },
+          meta: { title: "ภาพรวม", titleKey: "routes.dashboard" },
         },
         {
           path: "transactions",
           component: () => import("@/views/TransactionsView.vue"),
-          meta: { title: "รายการทั้งหมด" },
+          meta: { title: "รายการทั้งหมด", titleKey: "routes.transactions" },
         },
         {
           path: "reports",
           component: () => import("@/views/ReportsView.vue"),
-          meta: { title: "รายงานการเงิน" },
+          meta: { title: "รายงานการเงิน", titleKey: "routes.reports" },
         },
         {
           path: "plans",
           component: () => import("@/views/PlansView.vue"),
-          meta: { title: "แผนการเงิน" },
+          meta: { title: "แผนการเงิน", titleKey: "routes.plans" },
         },
         {
           path: "quests",
           component: () => import("@/views/QuestsView.vue"),
-          meta: { title: "Daily Quest" },
+          meta: { title: "Daily Quest", titleKey: "routes.quests" },
         },
         {
           path: "transactions/new",
@@ -78,12 +78,12 @@ export const router = createRouter({
         {
           path: "settings/accounts",
           component: () => import("@/views/SettingsView.vue"),
-          meta: { title: "จัดการบัญชี", settingsTab: "accounts" },
+          meta: { title: "จัดการบัญชี", titleKey: "routes.accounts", settingsTab: "accounts" },
         },
         {
           path: "settings/categories",
           component: () => import("@/views/SettingsView.vue"),
-          meta: { title: "จัดการหมวดหมู่", settingsTab: "categories" },
+          meta: { title: "จัดการหมวดหมู่", titleKey: "routes.categories", settingsTab: "categories" },
         },
         {
           path: "offline",
